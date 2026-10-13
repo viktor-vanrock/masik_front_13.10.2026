@@ -1,0 +1,8 @@
+.git
+.env
+.env.*
+coverage
+node_modules
+src
+public
+llm-markup-front

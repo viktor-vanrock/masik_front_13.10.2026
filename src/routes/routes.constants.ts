@@ -1,0 +1,15 @@
+export const ROUTES = {
+  HOME: '/',
+  GUIDE: '/guide',
+  BENCHMARK: (id: string | number) => `/benchmark/${id}`,
+  DASHBOARD: '/dashboard',
+  PROFILE: '/profile',
+  ADD_BENCHMARK: '/add-benchmark',
+  CREATE: '/create',
+  LOGIN: '/login',
+  REGISTER: '/register',
+  FORBIDDEN: '/forbidden',
+  ADMIN: '/admin',
+  ADMIN_EDIT: (id: string | number) => `/admin/edit/${id}`,
+  ADMIN_SETTINGS: (category: string, type: string) => `/admin/settings/${category}/${type}`,
+} as const;
