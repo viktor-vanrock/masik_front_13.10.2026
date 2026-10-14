@@ -2,32 +2,25 @@
 // retry (error) · аватар/роль/logout (authenticated).
 
 import { Link, useLocation } from 'react-router-dom';
-import { User, LogOut, LogIn, Shield, RotateCw } from 'lucide-react';
+import { RotateCw, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/auth';
 import { useApp } from '@/hooks/useApp';
-import { RoleBadge } from '../ui/RoleBadge';
 import { ROUTES } from '@/routes/routes.constants';
 
 export function NavbarAuthSlot() {
-  const { status, user, logout, retry, isLoggingOut } = useAuth();
-  const { t, isAdmin, userRole } = useApp();
+  const { status, user, retry } = useAuth();
+  const { t, isAdmin } = useApp();
   const location = useLocation();
-
-  // logout() всегда завершает сессию локально (успех/ошибка/timeout — не важно) и уводит
-  // на /login; disabled только на время ограниченного (≤6с) ожидания ответа сервера.
-  const handleLogout = () => {
-    logout();
-  };
 
   if (status === 'initializing') {
     return (
-      <div className="hidden md:flex items-center gap-2 animate-pulse">
+      <div className="nex-navbar__skeleton animate-pulse">
         <div
-          className="h-6 w-24 rounded"
+          className="nex-navbar__skeleton-name"
           style={{ backgroundColor: 'var(--bg-elevated)' }}
         />
         <div
-          className="h-6 w-6 rounded"
+          className="nex-navbar__skeleton-avatar"
           style={{ backgroundColor: 'var(--bg-elevated)' }}
         />
       </div>
@@ -40,7 +33,7 @@ export function NavbarAuthSlot() {
       <button
         onClick={retry}
         title={t.auth.sessionErrorTitle}
-        className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors"
+        className="nex-navbar__retry"
         style={{ color: 'var(--text-muted)', backgroundColor: 'var(--bg-elevated)' }}
       >
         <RotateCw size={14} />
@@ -54,22 +47,21 @@ export function NavbarAuthSlot() {
       <Link
         to={ROUTES.LOGIN}
         state={{ from: location }}
-        className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium text-white transition-colors"
-        style={{ backgroundColor: 'var(--accent)' }}
+        className="nex-navbar__login"
       >
-        <LogIn size={14} />
         {t.nav.login}
+        <ArrowRight size={14} />
       </Link>
     );
   }
 
   /* authenticated */
   return (
-    <div className="hidden md:flex items-center gap-1">
+    <div className="nex-navbar__authenticated">
       {isAdmin && (
         <Link
           to={ROUTES.ADMIN}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors"
+          className="nex-navbar__admin"
           style={{
             backgroundColor: location.pathname.startsWith(ROUTES.ADMIN)
               ? 'var(--bg-blue-tint)'
@@ -80,30 +72,20 @@ export function NavbarAuthSlot() {
           }}
           title={t.admin.title}
         >
-          <Shield size={14} />
           <span>{t.nav.adminPanel}</span>
         </Link>
       )}
 
       <Link
         to={ROUTES.PROFILE}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors"
-        style={{ color: 'var(--text-secondary)' }}
+        className="nex-navbar__user"
+        aria-label={`Личный кабинет: ${user?.username ?? ''}`}
       >
-        <User size={14} />
-        <span className="max-w-[100px] truncate">{user?.username}</span>
-        {userRole && <RoleBadge role={userRole} />}
+        <span className="nex-navbar__avatar">{user?.username?.slice(0, 1).toUpperCase()}</span>
+        <span className="nex-navbar__username">{user?.username}</span>
       </Link>
 
-      <button
-        onClick={handleLogout}
-        disabled={isLoggingOut}
-        className="p-1.5 rounded text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-        style={{ color: 'var(--text-muted)' }}
-        title={t.nav.logout}
-      >
-        <LogOut size={14} />
-      </button>
+      {/* Logout remains available from the profile; header keeps only the account name. */}
     </div>
   );
 }
@@ -116,22 +98,13 @@ interface MobileProps {
 }
 
 export function NavbarAuthSlotMobile({ onClose }: MobileProps) {
-  const { status, user, logout, retry, isLoggingOut } = useAuth();
-  const { t, isAdmin, userRole } = useApp();
-
-  // logout() всегда завершает сессию локально и уводит на /login — меню закроется само
-  // навигацией; отдельно закрывать по клику не нужно.
-  const handleLogout = () => {
-    logout();
-  };
+  const { status, user, retry } = useAuth();
+  const { t, isAdmin } = useApp();
 
   if (status === 'initializing') {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 animate-pulse">
-        <div
-          className="h-5 w-32 rounded"
-          style={{ backgroundColor: 'var(--bg-elevated)' }}
-        />
+      <div className="nex-navbar__mobile-skeleton animate-pulse">
+        <div />
       </div>
     );
   }
@@ -140,7 +113,7 @@ export function NavbarAuthSlotMobile({ onClose }: MobileProps) {
     return (
       <button
         onClick={retry}
-        className="flex items-center gap-2 px-3 py-2 rounded text-sm"
+        className="nex-navbar__mobile-retry"
         style={{ color: 'var(--text-muted)' }}
       >
         <RotateCw size={14} />
@@ -154,11 +127,10 @@ export function NavbarAuthSlotMobile({ onClose }: MobileProps) {
       <Link
         to={ROUTES.LOGIN}
         onClick={onClose}
-        className="flex items-center gap-2 px-3 py-2 rounded text-sm text-white"
-        style={{ backgroundColor: 'var(--accent)' }}
+        className="nex-navbar__login"
       >
-        <LogIn size={14} />
         {t.nav.login}
+        <ArrowRight size={14} />
       </Link>
     );
   }
@@ -169,32 +141,20 @@ export function NavbarAuthSlotMobile({ onClose }: MobileProps) {
         <Link
           to={ROUTES.ADMIN}
           onClick={onClose}
-          className="flex items-center gap-2 px-3 py-2 rounded text-sm"
+          className="nex-navbar__mobile-admin"
           style={{ color: 'var(--accent)' }}
         >
-          <Shield size={14} />
           {t.admin.title}
         </Link>
       )}
       <Link
         to={ROUTES.PROFILE}
         onClick={onClose}
-        className="flex items-center gap-2 px-3 py-2 rounded text-sm"
-        style={{ color: 'var(--text-secondary)' }}
+        className="nex-navbar__mobile-user"
       >
-        <User size={14} />
+        <span className="nex-navbar__avatar">{user?.username?.slice(0, 1).toUpperCase()}</span>
         <span>{user?.username}</span>
-        {userRole && <RoleBadge role={userRole} />}
       </Link>
-      <button
-        onClick={handleLogout}
-        disabled={isLoggingOut}
-        className="flex items-center gap-2 px-3 py-2 rounded text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-        style={{ color: 'var(--text-muted)' }}
-      >
-        <LogOut size={14} />
-        {t.nav.logout}
-      </button>
     </>
   );
 }
