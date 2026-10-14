@@ -11,6 +11,7 @@ import { Login } from "@/pages/Login";
 import { Register } from "@/pages/Register";
 import { Profile } from "@/pages/Profile";
 import { Forbidden } from "@/pages/Forbidden";
+import { HomePage } from "@/pages/Home";
 
 import { AdminGuard } from "@/components/layout/AdminGuard";
 import { AuthGuard } from "@/components/layout/AuthGuard";
@@ -41,13 +42,16 @@ const AdminSettings = lazy(() =>
 const withSuspense = (node: ReactNode) => <Suspense fallback={null}>{node}</Suspense>;
 
 export const routes: RouteObject[] = [
+  { path: ROUTES.HOME, element: <HomePage /> },
   {
     element: <LayoutWrapper />,
     children: [
-      { path: ROUTES.HOME, element: <BenchmarksCatalogue /> },
+      { path: ROUTES.CATALOGUE, element: <BenchmarksCatalogue /> },
+      { path: ROUTES.EVALUATE, element: <div /> },
       { path: ROUTES.GUIDE, element: <Guide /> },
       { path: ROUTES.BENCHMARK(":id"), element: withSuspense(<BenchmarkDetail />) },
       { path: ROUTES.DASHBOARD, element: withSuspense(<Dashboard />) },
+      { path: ROUTES.DASHBOARD_LEGACY, element: withSuspense(<Dashboard />) },
       { path: ROUTES.LOGIN, element: <Login /> },
       { path: ROUTES.REGISTER, element: <Register /> },
       { path: ROUTES.FORBIDDEN, element: <Forbidden /> },

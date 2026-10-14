@@ -1,0 +1,237 @@
+.nex-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid #e5e7eb;
+  background: rgb(255 255 255 / 93%);
+  backdrop-filter: blur(16px);
+}
+
+.nex-navbar__inner {
+  width: min(100%, 1360px);
+  min-height: 80px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.nex-navbar__brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  color: inherit;
+}
+
+.nex-navbar__logo {
+  display: block;
+  width: 142px;
+  height: auto;
+}
+
+.nex-navbar__links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  min-width: 0;
+}
+
+.nex-navbar__links a,
+.nex-navbar__mobile-links a {
+  color: #686e78;
+  font-size: 14px;
+  font-weight: 400;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 150ms ease;
+}
+
+.nex-navbar__links a:hover,
+.nex-navbar__links a.is-active,
+.nex-navbar__mobile-links a.is-active {
+  color: #3a427b;
+}
+
+.nex-navbar__links a:hover,
+.nex-navbar__mobile-links a:hover {
+  color: #3a427b;
+}
+
+.nex-navbar__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.nex-navbar__menu {
+  display: none;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  color: #373c55;
+}
+
+.nex-navbar__mobile {
+  display: none;
+}
+
+.nex-navbar .nex-desktop-auth {
+  display: flex;
+  align-items: center;
+}
+
+.nex-navbar .nex-login-btn {
+  display: inline-flex;
+  cursor: pointer;
+  min-height: 36px;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #3a427b;
+  border-radius: 20px !important;
+  padding: 8px 14px 8px 12px;
+  background: #515dad;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 450;
+  line-height: 20px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.nex-navbar .nex-login-btn:hover {
+  border-color: #465195;
+  background: #465195;
+}
+
+.nex-navbar .nex-login-btn:active {
+  border-color: #3a427b;
+  background: #3a427b;
+}
+
+.nex-navbar .nex-account-link {
+  display: flex;
+  max-width: 170px;
+  align-items: center;
+  gap: 9px;
+  color: #686e78;
+  font-size: 12px;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nex-navbar .nex-account-avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #eeeff7;
+  color: #3a427b;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.nex-navbar .nex-account-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nex-navbar .nex-admin-link,
+.nex-navbar .nex-logout-button,
+.nex-navbar .nex-retry-button {
+  color: #747985;
+}
+
+@media (max-width: 1200px) and (min-width: 1025px) {
+  .nex-navbar__inner {
+    gap: 18px;
+    padding: 0 28px;
+  }
+
+  .nex-navbar__logo {
+    width: 122px;
+  }
+
+  .nex-navbar__links {
+    gap: 18px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .nex-navbar .nex-desktop-auth {
+    display: none;
+  }
+
+  .nex-navbar__inner {
+    min-height: 72px;
+    padding: 0 24px;
+  }
+
+  .nex-navbar__links {
+    display: none;
+  }
+
+  .nex-navbar__menu {
+    display: inline-flex;
+  }
+
+  .nex-navbar__mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border-top: 1px solid #e5e7eb;
+    padding: 12px 24px 18px;
+    background: #fff;
+  }
+
+  .nex-navbar__mobile-links {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nex-navbar__mobile-links a {
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .nex-navbar__mobile-links a.is-active {
+    background: #f1f1ff;
+  }
+}
+
+@media (max-width: 600px) {
+  .nex-navbar__inner {
+    min-height: 64px;
+    padding: 0 18px;
+  }
+
+  .nex-navbar__logo {
+    width: 124px;
+  }
+
+  .nex-navbar__mobile {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+}
+
+@media (max-width: 760px) {
+  .nex-navbar .nex-account-link {
+    max-width: 120px;
+    font-size: 10px;
+  }
+}

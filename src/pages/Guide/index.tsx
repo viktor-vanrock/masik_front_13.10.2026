@@ -7,6 +7,7 @@ import { ConfluenceSection } from './ui/ConfluenceSection';
 import { SupportSection } from './ui/SupportSection';
 import { S3Section } from './ui/S3Section';
 import { useApp } from '@/hooks/useApp';
+import { ROUTES } from '@/routes/routes.constants';
 
 export function Guide() {
   const { t } = useApp();
@@ -38,7 +39,7 @@ export function Guide() {
 
         <footer className="mt-10 pt-6 border-t border-border-default">
           <Link 
-            to="/" 
+            to={ROUTES.CATALOGUE}
             className="text-sm font-medium text-accent hover:underline transition-all"
           >
             {t.guide.backCatalogue}

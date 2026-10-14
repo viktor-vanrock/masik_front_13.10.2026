@@ -50,7 +50,7 @@ export function Forbidden() {
 
       <div className="flex gap-3">
         <Link
-          to={ROUTES.HOME}
+          to={ROUTES.CATALOGUE}
           className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-opacity hover:opacity-80"
           style={{
             backgroundColor: "var(--accent)",

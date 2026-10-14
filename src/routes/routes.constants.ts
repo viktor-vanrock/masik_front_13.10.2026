@@ -1,8 +1,11 @@
 export const ROUTES = {
   HOME: '/',
+  CATALOGUE: '/catalog',
+  EVALUATE: '/evaluate',
   GUIDE: '/guide',
   BENCHMARK: (id: string | number) => `/benchmark/${id}`,
-  DASHBOARD: '/dashboard',
+  DASHBOARD: '/leaderboard',
+  DASHBOARD_LEGACY: '/dashboard',
   PROFILE: '/profile',
   ADD_BENCHMARK: '/add-benchmark',
   CREATE: '/create',

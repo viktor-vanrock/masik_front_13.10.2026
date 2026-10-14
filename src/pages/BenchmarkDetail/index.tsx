@@ -15,6 +15,7 @@ import { DatasetSubsamplesTab } from './Tabs/DatasetSubsamplesTab';
 import { HeaderCard } from './ui/HeaderCard';
 import { BenchmarkDetailSkeleton } from './ui/BenchmarkDetailSkeleton';
 import { CatalogErrorState } from '../BenchmarksCatalogue/ui/CatalogErrorState';
+import { ROUTES } from '@/routes/routes.constants';
 
 export function BenchmarkDetail() {
   const { id } = useParams<{ id: string }>();
@@ -37,7 +38,7 @@ export function BenchmarkDetail() {
 
   // 404 / 403 — навигационные редиректы; прочие ошибки — плашка с retry.
   if (isError && error instanceof ApiException) {
-    if (error.status === 404) return <Navigate to="/" replace />;
+    if (error.status === 404) return <Navigate to={ROUTES.CATALOGUE} replace />;
     if (error.status === 403) return <Navigate to="/forbidden" replace />;
   }
 
@@ -53,7 +54,7 @@ export function BenchmarkDetail() {
   }
 
   // `data` гарантированно есть: !isPending && !isError.
-  if (!benchmark) return <Navigate to="/" replace />;
+  if (!benchmark) return <Navigate to={ROUTES.CATALOGUE} replace />;
 
   const { datasetSubsamples } = benchmark;
   const hasDatasetSubsamples = datasetSubsamples && datasetSubsamples.length > 0;
