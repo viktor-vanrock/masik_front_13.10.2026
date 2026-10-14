@@ -7,6 +7,6 @@ import { ROUTES } from './routes.constants';
 export function postAuthRedirect(state: unknown, user: User | null): string {
   const from = (state as { from?: { pathname?: unknown } } | null)?.from?.pathname;
   if (typeof from !== 'string' || !from.startsWith('/') || from.startsWith('//')
-    || from === ROUTES.LOGIN || from === ROUTES.REGISTER) return ROUTES.HOME;
-  return canAccess(from, user) ? from : ROUTES.HOME;
+    || from === ROUTES.LOGIN || from === ROUTES.REGISTER) return ROUTES.CATALOGUE;
+  return canAccess(from, user) ? from : ROUTES.CATALOGUE;
 }

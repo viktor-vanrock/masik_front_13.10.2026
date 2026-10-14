@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { GitBranch } from 'lucide-react';
 import { GITVERSE_GIGAMETRIC_REPO } from '@/config/externalLinks';
 import { useApp } from '@/hooks/useApp';
+import { ROUTES } from '@/routes/routes.constants';
 
 export function Footer() {
   const { t } = useApp();
@@ -27,14 +28,14 @@ export function Footer() {
 
           <div className="flex items-center gap-6">
             <Link
-              to="/"
+              to={ROUTES.CATALOGUE}
               className="text-sm transition-colors"
               style={{ color: 'var(--text-muted)' }}
             >
               {t.nav.catalogue}
             </Link>
             <Link
-              to="/dashboard"
+              to={ROUTES.DASHBOARD}
               className="text-sm transition-colors"
               style={{ color: 'var(--text-muted)' }}
             >
