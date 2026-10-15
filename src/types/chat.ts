@@ -17,6 +17,17 @@ export const DialogueCompletionKind = {
 } as const;
 export type DialogueCompletionKind = typeof DialogueCompletionKind[keyof typeof DialogueCompletionKind];
 
+export const DisplayStatus = {
+  Draft: 'draft',
+  Summary: 'summary',
+  Generating: 'generating',
+  Samples: 'samples',
+  Producing: 'producing',
+  Ready: 'ready',
+  Submitted: 'submitted',
+} as const;
+export type DisplayStatus = typeof DisplayStatus[keyof typeof DisplayStatus];
+
 export type StructuredPromptKind = 'single' | 'boolean' | 'chips';
 
 export interface StructuredPromptOption {
@@ -74,4 +85,6 @@ export interface Dialogue {
   conversationId?: string;
   /** Reflects the backend conversation status (socket mode only). */
   conversationStatus?: ConversationStatus;
+  catalogSubmissionStatus?: 'validation' | 'published' | 'rejected' | null;
+  isArchived?: boolean;
 }

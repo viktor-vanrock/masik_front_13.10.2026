@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useBenchmarksQuery } from '@/api/catalog';
 import { DialoguePhase, DialogueStatus } from '@/types';
+import { deriveDisplayStatus } from '../../utils/deriveDisplayStatus';
 import { useApp } from '@/hooks/useApp';
 import { usePublishState } from './hooks/usePublishState';
 import { useConversation } from './hooks/useConversation';
@@ -11,8 +12,8 @@ import { PublishState } from '../PublishState';
 import { MessageInput } from '../MessageInput';
 import { GenerationPanel } from '../GenerationPanel';
 import { Sidebar } from '../Sidebar';
-import { GLOBAL_FOOTER_HEIGHT, GLOBAL_HEADER_HEIGHT } from '@/consts';
 import { RestoreModal } from '@ui/RestoreModal';
+import './benchmark-create.css';
 
 export const CreateContent = () => {
   const { lang, t } = useApp();
@@ -25,6 +26,7 @@ export const CreateContent = () => {
   const allBenchmarks = benchmarksResponse?.data ?? [];
 
   const [inputValue, setInputValue] = useState('');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -49,8 +51,9 @@ export const CreateContent = () => {
     connectionError,
     selectDialogue,
     startNewSession,
+    renameDialogue,
+    toggleArchive,
     sendMessage,
-    sendOptionMessage,
     acceptRecommendation,
     rejectRecommendation,
     skipRecommendToCreate,
@@ -71,6 +74,8 @@ export const CreateContent = () => {
     isStartingProduction,
     startProductionError,
   } = useConversation();
+
+  const archivedDialogueIds = dialogues.filter((dialogue) => dialogue.isArchived).map((dialogue) => dialogue.id);
 
   // resetPublish is stable (useCallback([])) — intentionally omitted from deps.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,34 +128,42 @@ export const CreateContent = () => {
       ? activeDialogue.benchmarkNameEn
       : activeDialogue.benchmarkName
     : undefined;
-
-  const HEADER_HEIGHT = GLOBAL_HEADER_HEIGHT + GLOBAL_FOOTER_HEIGHT;
-
+  const displayStatus = deriveDisplayStatus(activeDialogue, generation, production);
   const restoreEntityName = activeDialogue?.benchmarkName ?? activeDialogue?.benchmarkNameEn ?? '';
 
   return (
     <>
       <div
-        className="flex overflow-hidden"
+        className="benchmark-create-layout flex overflow-hidden"
         style={{
           backgroundColor: 'var(--bg-page)',
-          height: `calc(100vh - ${HEADER_HEIGHT}px)`,
         }}
       >
         <Sidebar
           dialogues={dialogues}
           activeId={activeId}
-          onNewSession={startNewSession}
+          onNewSession={() => { startNewSession(); setMobileSidebarOpen(false); }}
           onSelectDialogue={selectDialogue}
+          archivedIds={archivedDialogueIds}
+          onToggleArchive={(id) => { void toggleArchive(id); }}
+          deriveDisplayStatus={(d) => deriveDisplayStatus(
+            d,
+            d.id === activeId ? generation : undefined,
+            d.id === activeId ? production : undefined,
+          )}
+          mobileOpen={mobileSidebarOpen}
+          onToggleMobile={() => setMobileSidebarOpen((open) => !open)}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
         />
 
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="benchmark-create-main flex-1 flex flex-col min-w-0" onClick={() => setMobileSidebarOpen(false)}>
           <CreateHeader
             dialogueName={dialogueName}
-            dialogueStatus={activeDialogue?.status}
+            displayStatus={displayStatus}
             isTyping={isTyping}
-            showSkipToCreate={showSkipRecommendations}
-            onSkipToCreate={skipRecommendToCreate}
+            onRename={(name) => activeId && renameDialogue(activeId, name)}
+            onArchive={() => { if (activeId) void toggleArchive(activeId); }}
+            isArchived={activeDialogue?.isArchived ?? false}
           />
 
           {connectionError && (
@@ -162,53 +175,49 @@ export const CreateContent = () => {
             </p>
           )}
 
-          <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
-            {activeDialogue?.messages.map((msg) => (
-              <MessageBubble
-                key={msg.id}
-                msg={msg}
-                benchmarks={allBenchmarks}
-                onQuickReply={handleSendMessage}
-                quickReplyDisabled={isTyping || activeDialogue?.conversationStatus === 'abandoned'}
-                recommendationDisabled={isTyping || (
-                  Boolean(activeDialogue?.conversationId) &&
-                  activeDialogue?.conversationStatus !== 'active' &&
-                  activeDialogue?.conversationStatus !== 'awaiting_choice'
-                )}
-                onOptionSelect={sendOptionMessage}
-                onAcceptRecommendation={acceptRecommendation}
-                onRejectRecommendation={rejectRecommendation}
-              />
-            ))}
-            {isTyping && <TypingIndicator />}
-            {showGeneration && <GenerationPanel
-              key={activeId}
-              generation={generation}
-              loadError={generationError}
-              retryError={retryGenerationError}
-              isRetrying={isRetryingGeneration}
-              onRetry={retryGeneration}
-              onRefresh={refreshGeneration}
-              onCancel={cancelGeneration}
-              isCancelling={isCancellingGeneration}
-              cancelError={cancelGenerationError}
-              production={production}
-              productionLoading={productionLoading}
-              productionError={productionError}
-              onProductionRefresh={refreshProduction}
-              onStartProduction={startProduction}
-              isStartingProduction={isStartingProduction}
-              startProductionError={startProductionError}
-            />}
-            <div ref={bottomRef} />
+          <div className="benchmark-create-scroll flex-1 overflow-y-auto px-4 py-6">
+            <div className="benchmark-create-thread space-y-4">
+              {activeDialogue?.messages.map((msg) => (
+                <MessageBubble
+                  key={msg.id}
+                  msg={msg}
+                  benchmarks={allBenchmarks}
+                  recommendationDisabled={isTyping || (
+                    Boolean(activeDialogue?.conversationId) &&
+                    activeDialogue?.conversationStatus !== 'active' &&
+                    activeDialogue?.conversationStatus !== 'awaiting_choice'
+                  )}
+                  onAcceptRecommendation={acceptRecommendation}
+                  onRejectRecommendation={rejectRecommendation}
+                />
+              ))}
+              {isTyping && <TypingIndicator />}
+              {showGeneration && <GenerationPanel
+                key={activeId}
+                generation={generation}
+                loadError={generationError}
+                retryError={retryGenerationError}
+                isRetrying={isRetryingGeneration}
+                onRetry={retryGeneration}
+                onRefresh={refreshGeneration}
+                onCancel={cancelGeneration}
+                isCancelling={isCancellingGeneration}
+                cancelError={cancelGenerationError}
+                production={production}
+                productionLoading={productionLoading}
+                productionError={productionError}
+                onProductionRefresh={refreshProduction}
+                onStartProduction={startProduction}
+                isStartingProduction={isStartingProduction}
+                startProductionError={startProductionError}
+              />}
+              <div ref={bottomRef} />
+            </div>
           </div>
 
           <div
-            className="px-4 py-4 flex-shrink-0"
-            style={{
-              borderTop: '1px solid var(--border)',
-              backgroundColor: 'var(--bg-navbar)',
-            }}
+            className="benchmark-create-composer px-4 py-4 flex-shrink-0"
+            style={{ backgroundColor: 'var(--bg-page)' }}
           >
             {showGeneration && (
               <p className="py-3 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -218,31 +227,33 @@ export const CreateContent = () => {
                       : t.create.generation.waiting}
               </p>
             )}
-            {isCreateDone ? (
-              <PublishState
-                stage={publishStage}
-                progress={publishProgress}
-                publishedId={publishedId}
-                isPending={isPublishing}
-                publishError={publishError}
-                onPublish={(suiteId) => handlePublish(activeDialogue, suiteId)}
-              />
-            ) : (
-              <MessageInput
-                inputValue={inputValue}
-                isTyping={isTyping}
-                status={activeDialogue?.conversationId && activeDialogue.conversationStatus !== 'abandoned'
-                  ? DialogueStatus.InProgress : activeDialogue?.status}
-                completionKind={activeDialogue?.completionKind}
-                awaitingStructuredAnswer={awaitingStructuredAnswer}
-                showSkipButton={showSkipRecommendations}
-                doneMessage={doneMessage}
-                onSend={() => handleSendMessage()}
-                onChange={setInputValue}
-                onKeyDown={handleKeyDown}
-                onSkip={skipRecommendToCreate}
-              />
-            )}
+            <div className="benchmark-create-composer__inner">
+              {isCreateDone ? (
+                <PublishState
+                  stage={publishStage}
+                  progress={publishProgress}
+                  publishedId={publishedId}
+                  isPending={isPublishing}
+                  publishError={publishError}
+                  onPublish={(suiteId) => handlePublish(activeDialogue, suiteId)}
+                />
+              ) : (
+                <MessageInput
+                  inputValue={inputValue}
+                  isTyping={isTyping}
+                  status={activeDialogue?.conversationId && activeDialogue.conversationStatus !== 'abandoned'
+                    ? DialogueStatus.InProgress : activeDialogue?.status}
+                  completionKind={activeDialogue?.completionKind}
+                  awaitingStructuredAnswer={awaitingStructuredAnswer}
+                  showSkipButton={showSkipRecommendations}
+                  doneMessage={doneMessage}
+                  onSend={() => handleSendMessage()}
+                  onChange={setInputValue}
+                  onKeyDown={handleKeyDown}
+                  onSkip={skipRecommendToCreate}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>

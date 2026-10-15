@@ -33,12 +33,15 @@ export function loadConvName(id: string): { ru: string; en: string } {
 export function dtoToDialogue(conv: ConversationDto): Dialogue {
   const { id } = conv;
   const name = loadConvName(id);
+  const title = conv.title ?? name.ru;
   return {
     id,
     conversationId: id,
     conversationStatus: conv.status,
-    benchmarkName: name.ru,
-    benchmarkNameEn: name.en,
+    catalogSubmissionStatus: null,
+    benchmarkName: title,
+    benchmarkNameEn: conv.title ?? name.en,
+    isArchived: conv.isArchived ?? false,
     startedAt: conv.createdAt,
     updatedAt: conv.updatedAt ?? conv.createdAt,
     status:

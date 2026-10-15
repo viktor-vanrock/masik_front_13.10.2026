@@ -23,6 +23,7 @@ import {
   CONVERSATIONS_QUERY_KEYS,
   getConversation,
   useConversationsQuery,
+  updateConversation,
 } from "@/api/conversations";
 import type { Dialogue } from "@/types";
 import { DialogueStatus, DialoguePhase } from "@/types";
@@ -233,11 +234,15 @@ export function useConversation() {
               ? {
                 ...prev[idx],
                 messages,
+                benchmarkName: detail.title ?? prev[idx].benchmarkName ?? n.ru,
+                benchmarkNameEn: detail.title ?? prev[idx].benchmarkNameEn ?? n.en,
+                isArchived: detail.isArchived ?? false,
                 phase:
                   detail.intent === 'create_new'
                     ? DialoguePhase.Create
                     : DialoguePhase.Recommend,
                 conversationStatus: convStatus,
+                catalogSubmissionStatus: detail.catalogSubmission?.status ?? null,
                 status,
                 updatedAt: detail.updatedAt,
               }
@@ -245,8 +250,10 @@ export function useConversation() {
                 id: storedId,
                 conversationId: storedId,
                 conversationStatus: convStatus,
-                benchmarkName: n.ru,
-                benchmarkNameEn: n.en,
+                catalogSubmissionStatus: detail.catalogSubmission?.status ?? null,
+                benchmarkName: detail.title ?? n.ru,
+                benchmarkNameEn: detail.title ?? n.en,
+                isArchived: detail.isArchived ?? false,
                 startedAt: detail.createdAt,
                 updatedAt: detail.updatedAt,
                 status,
@@ -341,19 +348,24 @@ export function useConversation() {
       if (userId) sessionStorage.setItem(CONV_OWNER_KEY, userId);
       sessionStorage.setItem(CONV_STATUS_KEY, "active");
       setActiveId(conversationId);
+      if (wasNewSession) {
+        void updateConversation(conversationId, { title: 'Новый бенчмарк' }).catch(() => undefined);
+      }
       setSocketDialogues((prev) => {
         if (prev.find((d) => d.id === conversationId)) return prev;
         const now = new Date().toISOString();
         if (wasNewSession) {
-          // New conversation: prepend with "Новый чат" / Interview status.
-          saveConvName(conversationId, "Новый чат", "New Chat");
+          // New conversation starts with the default benchmark title.
+          saveConvName(conversationId, "Новый бенчмарк", "New Benchmark");
           return [
             {
               id: conversationId,
               conversationId,
               conversationStatus: "active" as const,
-              benchmarkName: "Новый чат",
-              benchmarkNameEn: "New Chat",
+              catalogSubmissionStatus: null,
+              benchmarkName: "Новый бенчмарк",
+              benchmarkNameEn: "New Benchmark",
+              isArchived: false,
               startedAt: now,
               updatedAt: now,
               status: DialogueStatus.Interview,
@@ -372,8 +384,10 @@ export function useConversation() {
             id: conversationId,
             conversationId,
             conversationStatus: "active" as const,
+            catalogSubmissionStatus: null,
             benchmarkName: rn.ru,
             benchmarkNameEn: rn.en,
+            isArchived: false,
             startedAt: now,
             updatedAt: now,
             status: DialogueStatus.InProgress,
@@ -651,6 +665,10 @@ export function useConversation() {
                 ...d,
                 messages,
                 conversationStatus: convStatus ?? d.conversationStatus,
+                catalogSubmissionStatus: detail.catalogSubmission?.status ?? null,
+                benchmarkName: detail.title ?? d.benchmarkName,
+                benchmarkNameEn: detail.title ?? d.benchmarkNameEn,
+                isArchived: detail.isArchived ?? false,
                 ...(nextStatus ? { status: nextStatus } : {}),
               };
             }),
@@ -793,6 +811,10 @@ export function useConversation() {
                   ? {
                     ...dialogue,
                     messages,
+                    catalogSubmissionStatus: detail.catalogSubmission?.status ?? null,
+                    benchmarkName: detail.title ?? dialogue.benchmarkName,
+                    benchmarkNameEn: detail.title ?? dialogue.benchmarkNameEn,
+                    isArchived: detail.isArchived ?? false,
                     updatedAt: detail.updatedAt,
                   }
                   : dialogue,
@@ -816,6 +838,10 @@ export function useConversation() {
                 ...dialogue,
                 messages,
                 conversationStatus: detail.status,
+                catalogSubmissionStatus: detail.catalogSubmission?.status ?? null,
+                benchmarkName: detail.title ?? dialogue.benchmarkName,
+                benchmarkNameEn: detail.title ?? dialogue.benchmarkNameEn,
+                isArchived: detail.isArchived ?? false,
                 status: dialogueStatus,
                 updatedAt: detail.updatedAt,
               }
@@ -892,8 +918,10 @@ export function useConversation() {
               id: convId,
               conversationId: convId,
               conversationStatus: detail.status,
-              benchmarkName: existing?.benchmarkName ?? name.ru,
-              benchmarkNameEn: existing?.benchmarkNameEn ?? name.en,
+              catalogSubmissionStatus: detail.catalogSubmission?.status ?? null,
+              benchmarkName: detail.title ?? existing?.benchmarkName ?? name.ru,
+              benchmarkNameEn: detail.title ?? existing?.benchmarkNameEn ?? name.en,
+              isArchived: detail.isArchived ?? false,
               startedAt: detail.createdAt,
               updatedAt: detail.updatedAt,
               status: dialogueStatus,
@@ -938,6 +966,40 @@ export function useConversation() {
     removeSessionParam();
     socketRef.current?.emit(WS_CLIENT_EVENTS.START_CHAT, {});
   }, [removeSessionParam, setActiveId]);
+
+  const renameDialogue = useCallback(async (id: string, name: string) => {
+    const target = dialogues.find((dialogue) => dialogue.id === id);
+    if (!target?.conversationId) return;
+    await updateConversation(target.conversationId, { title: name });
+    saveConvName(id, name, name);
+    setSocketDialogues((previous) => {
+      const existing = previous.find((dialogue) => dialogue.id === id);
+      const renamed: Dialogue = {
+        ...(existing ?? target),
+        benchmarkName: name,
+        benchmarkNameEn: name,
+        updatedAt: new Date().toISOString(),
+      };
+      return existing
+        ? previous.map((dialogue) => dialogue.id === id ? renamed : dialogue)
+        : [renamed, ...previous];
+    });
+    void getQueryClient()?.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEYS.lists() });
+  }, [dialogues]);
+
+  const toggleArchive = useCallback(async (id: string) => {
+    const target = dialogues.find((dialogue) => dialogue.id === id);
+    if (!target?.conversationId) return;
+    const next = !target.isArchived;
+    await updateConversation(target.conversationId, { isArchived: next });
+    setSocketDialogues((previous) => {
+      const exists = previous.some((dialogue) => dialogue.id === id);
+      return exists
+        ? previous.map((dialogue) => dialogue.id === id ? { ...dialogue, isArchived: next } : dialogue)
+        : [{ ...target, isArchived: next }, ...previous];
+    });
+    void getQueryClient()?.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEYS.lists() });
+  }, [dialogues]);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -1048,6 +1110,8 @@ export function useConversation() {
     connectionError,
     selectDialogue,
     startNewSession,
+    renameDialogue,
+    toggleArchive,
     sendMessage,
     sendOptionMessage,
     acceptRecommendation,

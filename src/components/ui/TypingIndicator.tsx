@@ -4,22 +4,8 @@ interface Props {
 
 export const TypingIndicator = ({ pointsCount = 3 }: Props) => {
   return (
-    <div className="flex items-end gap-3">
-      <div
-        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-        style={{
-          background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))',
-        }}
-      >
-        M
-      </div>
-      <div
-        className="px-4 py-3 rounded-2xl rounded-tl-sm"
-        style={{
-          backgroundColor: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-        }}
-      >
+    <div className="benchmark-chat-message-row is-assistant">
+      <div className="benchmark-chat-message is-assistant" role="status" aria-label="Печатает">
         <div className="flex items-center gap-1">
           {Array.from({ length: pointsCount }, (_, idx) => (
             <div

@@ -1,51 +1,56 @@
 import type { Dialogue } from "@/types";
-import { STATUS_CONFIG } from "../../consts";
+import { DISPLAY_STATUS_CONFIG } from "../../consts";
+import type { DisplayStatus } from "@/types";
 import { useApp } from "@/hooks/useApp";
 
 
 interface Props {
   dialogue: Dialogue;
+  displayStatus: DisplayStatus;
   isActive: boolean;
   onClick: () => void;
+  isArchived?: boolean;
+  onArchiveToggle?: () => void;
 }
 
-export const DialogueListItem = ({ dialogue: d, isActive, onClick }: Props) => {
-  const cfg = STATUS_CONFIG[d.status];
+export const DialogueListItem = ({
+  dialogue: d,
+  displayStatus,
+  isActive,
+  onClick,
+  isArchived = false,
+  onArchiveToggle,
+}: Props) => {
+  const cfg = DISPLAY_STATUS_CONFIG[displayStatus];
   const { lang } = useApp();
+  const statusColors = cfg.tone === 'green'
+    ? { backgroundColor: '#e5f4ee', color: '#0c7055' }
+    : cfg.tone === 'brand'
+      ? { backgroundColor: '#eeeff7', color: '#3a427b' }
+      : { backgroundColor: '#f3f6fa', color: '#686e78' };
   const name = lang === 'en' ? d.benchmarkNameEn : d.benchmarkName;
   const date = new Date(d.updatedAt).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-US');
 
   return (
-    <button
-      onClick={onClick}
-      className="w-full text-left px-3 py-2.5 rounded-xl transition-colors"
-      style={{
-        backgroundColor: isActive ? 'var(--bg-elevated)' : 'transparent',
-        border: isActive ? '1px solid var(--border-strong)' : '1px solid transparent',
-      }}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <p
-          className="text-sm font-medium truncate"
-          style={{
-            color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-          }}
-        >
-          {name}
-        </p>
-        <span
-          className="text-xs px-1.5 py-0.5 rounded-full flex-shrink-0"
-          style={{
-            backgroundColor: `var(${cfg.bgVar})`,
-            color: `var(${cfg.colorVar})`,
-          }}
-        >
+    <div className={`benchmark-create-chat-card${isActive ? ' is-active' : ''}${isArchived ? ' is-archived' : ''}`}>
+      <button type="button" onClick={onClick} className="benchmark-create-chat-card__main">
+        <strong>{name}</strong>
+        <span className="benchmark-create-chat-card__status" style={{ ...statusColors }}>
           {lang === 'ru' ? cfg.label.ru : cfg.label.en}
         </span>
-      </div>
-      <p className="text-xs mt-0.5" style={{ color: 'var(--text-dim)' }}>
-        {date}
-      </p>
-    </button>
+        <small>{date}</small>
+      </button>
+      {onArchiveToggle && isArchived && (
+        <button
+          type="button"
+          className="benchmark-create-chat-card__archive"
+          onClick={onArchiveToggle}
+          aria-label="Вернуть чат из архива"
+          title="Вернуть из архива"
+        >
+          Вернуть
+        </button>
+      )}
+    </div>
   );
 }

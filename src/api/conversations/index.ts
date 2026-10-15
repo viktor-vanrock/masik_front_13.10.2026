@@ -1,10 +1,12 @@
 export { listConversations, getConversation, getConversationGeneration, retryConversationGeneration, cancelConversationGeneration } from './requests';
+export { updateConversation } from './requests';
 export { getConversationProduction, startConversationProduction } from './requests';
 export { useConversationsQuery, useConversationDetailQuery } from './queries';
 export { CONVERSATIONS_QUERY_KEYS } from './queryKeys';
 export type {
   ConversationDto,
   ConversationDetailDto,
+  CatalogSubmissionDto,
   MessageDto,
   RecommendationDto,
   ConversationGenerationDto,
