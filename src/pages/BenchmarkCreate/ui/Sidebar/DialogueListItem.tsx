@@ -3,14 +3,12 @@ import { DISPLAY_STATUS_CONFIG } from "../../consts";
 import type { DisplayStatus } from "@/types";
 import { useApp } from "@/hooks/useApp";
 
-
 interface Props {
   dialogue: Dialogue;
   displayStatus: DisplayStatus;
   isActive: boolean;
   onClick: () => void;
   isArchived?: boolean;
-  onArchiveToggle?: () => void;
 }
 
 export const DialogueListItem = ({
@@ -19,7 +17,6 @@ export const DialogueListItem = ({
   isActive,
   onClick,
   isArchived = false,
-  onArchiveToggle,
 }: Props) => {
   const cfg = DISPLAY_STATUS_CONFIG[displayStatus];
   const { lang } = useApp();
@@ -32,25 +29,29 @@ export const DialogueListItem = ({
   const date = new Date(d.updatedAt).toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'en-US');
 
   return (
-    <div className={`benchmark-create-chat-card${isActive ? ' is-active' : ''}${isArchived ? ' is-archived' : ''}`}>
-      <button type="button" onClick={onClick} className="benchmark-create-chat-card__main">
-        <strong>{name}</strong>
-        <span className="benchmark-create-chat-card__status" style={{ ...statusColors }}>
+    <div
+      className={[
+        'relative flex items-start gap-1 border rounded-xl transition-colors duration-150',
+        isActive ? 'border-[#afb4d9] bg-[#eeeff7]' : 'border-transparent hover:bg-[#f3f6fa]',
+        isArchived ? 'bg-[#fcfcfd]' : '',
+      ].join(' ')}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex min-w-0 flex-1 flex-col items-start border-0 p-3.5 bg-transparent text-inherit text-left cursor-pointer"
+      >
+        <strong className="block max-w-full mb-2 text-sm font-medium leading-[1.6] text-[#1e1e20] [overflow-wrap:anywhere]">
+          {name}
+        </strong>
+        <span
+          className="inline-flex max-w-full items-center rounded-md px-2 py-1 text-xs leading-[1.4] whitespace-normal"
+          style={statusColors}
+        >
           {lang === 'ru' ? cfg.label.ru : cfg.label.en}
         </span>
-        <small>{date}</small>
+        <small className="block mt-2 text-xs text-[#686e78]">{date}</small>
       </button>
-      {onArchiveToggle && isArchived && (
-        <button
-          type="button"
-          className="benchmark-create-chat-card__archive"
-          onClick={onArchiveToggle}
-          aria-label="Вернуть чат из архива"
-          title="Вернуть из архива"
-        >
-          Вернуть
-        </button>
-      )}
     </div>
   );
-}
+};

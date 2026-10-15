@@ -32,6 +32,29 @@
   to { transform: rotate(360deg); }
 }
 
+@keyframes archive-open {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #BFB8E5 transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #BFB8E5;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .animate-spin {
   animation: spin 1s linear infinite;
 }

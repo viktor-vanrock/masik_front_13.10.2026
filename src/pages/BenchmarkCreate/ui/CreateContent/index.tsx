@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useBenchmarksQuery } from '@/api/catalog';
-import { DialoguePhase, DialogueStatus } from '@/types';
+import { DialogueStatus } from '@/types';
 import { deriveDisplayStatus } from '../../utils/deriveDisplayStatus';
 import { useApp } from '@/hooks/useApp';
 import { usePublishState } from './hooks/usePublishState';
@@ -13,7 +13,6 @@ import { MessageInput } from '../MessageInput';
 import { GenerationPanel } from '../GenerationPanel';
 import { Sidebar } from '../Sidebar';
 import { RestoreModal } from '@ui/RestoreModal';
-import './benchmark-create.css';
 
 export const CreateContent = () => {
   const { lang, t } = useApp();
@@ -56,7 +55,6 @@ export const CreateContent = () => {
     sendMessage,
     acceptRecommendation,
     rejectRecommendation,
-    skipRecommendToCreate,
     generation,
     generationError,
     retryGeneration,
@@ -105,18 +103,7 @@ export const CreateContent = () => {
     [handleSendMessage],
   );
 
-  const showSkipRecommendations =
-    activeDialogue?.phase === DialoguePhase.Recommend &&
-    (activeDialogue.conversationStatus === 'active' || activeDialogue.conversationStatus === 'awaiting_choice');
-
   const doneMessage = t.create.recommendDone;
-
-  const lastMessage = activeDialogue?.messages.at(-1);
-  const awaitingStructuredAnswer =
-    !!activeDialogue &&
-    activeDialogue.status !== DialogueStatus.Done &&
-    lastMessage?.role === 'assistant' &&
-    !!lastMessage.structuredPrompt;
 
   // Create phase disabled — isCreateDone always false until backend supports it.
   const isCreateDone = false;
@@ -134,8 +121,9 @@ export const CreateContent = () => {
   return (
     <>
       <div
-        className="benchmark-create-layout flex overflow-hidden"
+        className="relative w-full max-w-[1440px] mx-auto flex overflow-hidden max-[600px]:[--benchmark-create-header-height:68px] max-[600px]:[--benchmark-create-footer-height:125px] max-[860px]:[--benchmark-create-header-height:68px]"
         style={{
+          height: 'calc(100dvh - var(--benchmark-create-header-height, 80px) - var(--benchmark-create-footer-height, 89px))',
           backgroundColor: 'var(--bg-page)',
         }}
       >
@@ -145,7 +133,6 @@ export const CreateContent = () => {
           onNewSession={() => { startNewSession(); setMobileSidebarOpen(false); }}
           onSelectDialogue={selectDialogue}
           archivedIds={archivedDialogueIds}
-          onToggleArchive={(id) => { void toggleArchive(id); }}
           deriveDisplayStatus={(d) => deriveDisplayStatus(
             d,
             d.id === activeId ? generation : undefined,
@@ -156,7 +143,7 @@ export const CreateContent = () => {
           onCloseMobile={() => setMobileSidebarOpen(false)}
         />
 
-        <div className="benchmark-create-main flex-1 flex flex-col min-w-0" onClick={() => setMobileSidebarOpen(false)}>
+        <div className="flex-1 flex flex-col min-w-0" onClick={() => setMobileSidebarOpen(false)}>
           <CreateHeader
             dialogueName={dialogueName}
             displayStatus={displayStatus}
@@ -175,8 +162,8 @@ export const CreateContent = () => {
             </p>
           )}
 
-          <div className="benchmark-create-scroll flex-1 overflow-y-auto px-4 py-6">
-            <div className="benchmark-create-thread space-y-4">
+          <div className="flex-1 overflow-y-auto px-4 pt-7 pb-3">
+            <div className="flex flex-col gap-6 pb-6 w-full max-w-[760px] mx-auto">
               {activeDialogue?.messages.map((msg) => (
                 <MessageBubble
                   key={msg.id}
@@ -216,7 +203,7 @@ export const CreateContent = () => {
           </div>
 
           <div
-            className="benchmark-create-composer px-4 py-4 flex-shrink-0"
+            className="w-full px-4 py-3 flex-shrink-0"
             style={{ backgroundColor: 'var(--bg-page)' }}
           >
             {showGeneration && (
@@ -227,7 +214,7 @@ export const CreateContent = () => {
                       : t.create.generation.waiting}
               </p>
             )}
-            <div className="benchmark-create-composer__inner">
+            <div className="w-full max-w-[760px] mx-auto">
               {isCreateDone ? (
                 <PublishState
                   stage={publishStage}
@@ -244,13 +231,10 @@ export const CreateContent = () => {
                   status={activeDialogue?.conversationId && activeDialogue.conversationStatus !== 'abandoned'
                     ? DialogueStatus.InProgress : activeDialogue?.status}
                   completionKind={activeDialogue?.completionKind}
-                  awaitingStructuredAnswer={awaitingStructuredAnswer}
-                  showSkipButton={showSkipRecommendations}
                   doneMessage={doneMessage}
                   onSend={() => handleSendMessage()}
                   onChange={setInputValue}
                   onKeyDown={handleKeyDown}
-                  onSkip={skipRecommendToCreate}
                 />
               )}
             </div>

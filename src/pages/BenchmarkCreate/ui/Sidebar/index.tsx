@@ -10,7 +10,6 @@ interface Props {
   onNewSession: () => void;
   onSelectDialogue: (id: string) => void;
   archivedIds: string[];
-  onToggleArchive: (id: string) => void;
   deriveDisplayStatus: (dialogue: Dialogue) => DisplayStatus;
   mobileOpen: boolean;
   onToggleMobile: () => void;
@@ -23,7 +22,6 @@ export const Sidebar = ({
   onNewSession,
   onSelectDialogue,
   archivedIds,
-  onToggleArchive,
   deriveDisplayStatus,
   mobileOpen,
   onToggleMobile,
@@ -37,74 +35,90 @@ export const Sidebar = ({
   const archivedDialogues = dialogues.filter((dialogue) => archivedIdSet.has(dialogue.id));
 
   return (
-  <aside className={`benchmark-create-sidebar ${mobileOpen ? 'is-open' : ''}`}>
-    <button
-      type="button"
-      className="benchmark-create-sidebar__mobile-toggle"
-      onClick={onToggleMobile}
-      aria-label={mobileOpen ? 'Закрыть список чатов' : 'Открыть список чатов'}
-      aria-expanded={mobileOpen}
+    <aside
+      className={[
+        'relative z-30 flex w-[260px] min-w-[260px] h-full flex-col gap-5 border-r border-[var(--border)] py-7 px-5 bg-[#fcfcfd]',
+        'max-[600px]:w-[60px] max-[600px]:min-w-[60px] max-[600px]:flex-[0_0_60px] max-[600px]:gap-0 max-[600px]:py-3 max-[600px]:px-2',
+        mobileOpen ? 'max-[600px]:absolute max-[600px]:inset-y-0 max-[600px]:left-0 max-[600px]:w-[min(280px,calc(100vw-56px))] max-[600px]:min-w-0 max-[600px]:px-4 max-[600px]:py-3 max-[600px]:shadow-[12px_0_32px_#1e1e201a]' : '',
+      ].join(' ')}
     >
-      <Menu size={20} />
-    </button>
-
-    <div className="benchmark-create-sidebar__content">
-      <button type="button" onClick={() => { onNewSession(); onCloseMobile(); }} className="benchmark-create-sidebar__new-chat">
-        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3v12M3 9h12" /></svg>
-        <span>{t.create.newChat}</span>
+      <button
+        type="button"
+        className="hidden max-[600px]:grid relative z-[2] w-10 h-10 flex-none place-items-center border border-[var(--border)] rounded-[10px] m-0 bg-white text-[#515dad] cursor-pointer"
+        onClick={onToggleMobile}
+        aria-label={mobileOpen ? 'Закрыть список чатов' : 'Открыть список чатов'}
+        aria-expanded={mobileOpen}
+      >
+        <Menu size={20} />
       </button>
 
-      <div className="benchmark-create-sidebar__list">
-        <p className="benchmark-create-sidebar__label">Чаты создания бенчмарков</p>
-        <div className="benchmark-create-sidebar__items">
-          {activeDialogues.map((dialogue) => (
-            <DialogueListItem
-              key={dialogue.id}
-              dialogue={dialogue}
-              displayStatus={deriveDisplayStatus(dialogue)}
-              isActive={dialogue.id === activeId}
-              onArchiveToggle={() => onToggleArchive(dialogue.id)}
-              onClick={() => {
-                onSelectDialogue(dialogue.id);
-                onCloseMobile();
-              }}
-            />
-          ))}
-        </div>
-      </div>
-      <div className="benchmark-create-sidebar__archive">
-        {archiveOpen && (
-          <div className="benchmark-create-sidebar__archive-popover">
-            <p className="benchmark-create-sidebar__archive-heading">Архивированные чаты</p>
-            <div className="benchmark-create-sidebar__archive-items">
-              {archivedDialogues.length ? archivedDialogues.map((dialogue) => (
-                <DialogueListItem
-                  key={dialogue.id}
-                  dialogue={dialogue}
-                  displayStatus={deriveDisplayStatus(dialogue)}
-                  isActive={dialogue.id === activeId}
-                  onClick={() => {
-                    onSelectDialogue(dialogue.id);
-                    onCloseMobile();
-                  }}
-                />
-              )) : (
-                <p className="benchmark-create-sidebar__archive-empty">Архив пуст</p>
-              )}
-            </div>
-          </div>
-        )}
+      <div className={[
+        'relative flex min-h-0 flex-1 flex-col gap-5',
+        mobileOpen ? 'max-[600px]:flex max-[600px]:pt-2' : 'max-[600px]:hidden',
+      ].join(' ')}>
         <button
           type="button"
-          className="benchmark-create-sidebar__archive-toggle"
-          onClick={() => setArchiveOpen((open) => !open)}
-          aria-expanded={archiveOpen}
+          onClick={() => { onNewSession(); onCloseMobile(); }}
+          className="grid w-full min-h-[44px] flex-none items-center grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] border border-transparent rounded-[30px] py-2.5 px-5 bg-[#515dad] text-white text-xs font-medium cursor-pointer transition-colors duration-150 hover:border-[#465195] hover:bg-[#465195]"
         >
-          <ChevronRight size={15} className={archiveOpen ? 'is-open' : ''} />
-          <span>Архивированные чаты ({archivedDialogues.length})</span>
+          <svg viewBox="0 0 18 18" aria-hidden="true" className="col-start-1 justify-self-end w-4 h-4 mr-2 fill-none stroke-current stroke-[2.5] [stroke-linecap:round] [stroke-linejoin:round]">
+            <path d="M9 3v12M3 9h12" />
+          </svg>
+          <span className="col-start-2 whitespace-nowrap">{t.create.newChat}</span>
         </button>
+
+        <div className="flex min-h-0 flex-1 flex-col gap-4">
+          <p className="flex-none px-2 text-xs leading-[1.5] text-[#686e78]">Чаты создания бенчмарков</p>
+          <div className="grid min-h-0 content-start gap-2 overflow-y-auto overscroll-contain pr-2 scrollbar-thin scrollbar-thumb-[#BFB8E5] scrollbar-track-transparent">
+            {activeDialogues.map((dialogue) => (
+              <DialogueListItem
+                key={dialogue.id}
+                dialogue={dialogue}
+                displayStatus={deriveDisplayStatus(dialogue)}
+                isActive={dialogue.id === activeId}
+                onClick={() => {
+                  onSelectDialogue(dialogue.id);
+                  onCloseMobile();
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="static flex-none mt-auto">
+          {archiveOpen && (
+            <div className="absolute z-10 inset-x-0 top-16 bottom-10 flex min-h-0 flex-col gap-2 overflow-hidden pt-2 px-1 bg-[#fcfcfd] origin-bottom animate-[archive-open_180ms_ease-out_both]">
+              <p className="flex-none text-xs leading-[1.5] text-[#686e78]">Архивированные чаты</p>
+              <div className="grid min-h-0 content-start flex-1 gap-1 overflow-y-auto overscroll-contain pr-2 scrollbar-thin scrollbar-thumb-[#BFB8E5] scrollbar-track-transparent">
+                {archivedDialogues.length ? archivedDialogues.map((dialogue) => (
+                  <DialogueListItem
+                    key={dialogue.id}
+                    dialogue={dialogue}
+                    displayStatus={deriveDisplayStatus(dialogue)}
+                    isActive={dialogue.id === activeId}
+                    isArchived
+                    onClick={() => {
+                      onSelectDialogue(dialogue.id);
+                      onCloseMobile();
+                    }}
+                  />
+                )) : (
+                  <p className="py-3.5 px-2.5 text-[11px] text-[#686e78]">Архив пуст</p>
+                )}
+              </div>
+            </div>
+          )}
+          <button
+            type="button"
+            className="flex w-full min-h-[40px] items-center gap-2 border-0 rounded-none py-2 px-1 bg-transparent text-[#686e78] text-xs text-left cursor-pointer"
+            onClick={() => setArchiveOpen((open) => !open)}
+            aria-expanded={archiveOpen}
+          >
+            <ChevronRight size={15} className={`transition-transform duration-150 ${archiveOpen ? 'rotate-90' : ''}`} />
+            <span className="min-w-0 flex-1">Архивированные чаты ({archivedDialogues.length})</span>
+          </button>
+        </div>
       </div>
-    </div>
-  </aside>
+    </aside>
   );
 };

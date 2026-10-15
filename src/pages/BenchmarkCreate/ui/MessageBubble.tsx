@@ -25,11 +25,11 @@ export const MessageBubble = ({
     ?? [];
 
   return (
-    <div className={`benchmark-chat-message-row ${isUser ? 'is-user' : 'is-assistant'}`}>
-      <div className={`benchmark-chat-message ${isUser ? 'is-user' : 'is-assistant'}`}>
-        <p>{msg.content}</p>
+    <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div className={`flex w-fit max-w-[90%] flex-col gap-2 rounded-[20px] text-[13px] leading-[1.8] [overflow-wrap:anywhere] max-[600px]:rounded-2xl max-[600px]:p-5 ${isUser ? 'bg-[#eeeff7] px-[22px] py-4 max-[600px]:px-[18px] max-[600px]:py-3.5 text-[#1e1e20]' : 'bg-[#f3f6fa] px-7 py-6 text-[#1e1e20]'}`}>
+        <p className="m-0 whitespace-pre-wrap">{msg.content}</p>
         {!isUser && variants.length > 0 && (
-          <p className="benchmark-chat-message__variants">
+          <p className="m-0 text-[13px] leading-[1.6] text-[#1e1e20]">
             <strong>{lang === 'ru' ? 'Варианты:' : 'Options:'}</strong>{' '}
             {variants.join(' · ')}
           </p>

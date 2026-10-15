@@ -970,35 +970,46 @@ export function useConversation() {
   const renameDialogue = useCallback(async (id: string, name: string) => {
     const target = dialogues.find((dialogue) => dialogue.id === id);
     if (!target?.conversationId) return;
-    await updateConversation(target.conversationId, { title: name });
-    saveConvName(id, name, name);
-    setSocketDialogues((previous) => {
-      const existing = previous.find((dialogue) => dialogue.id === id);
-      const renamed: Dialogue = {
-        ...(existing ?? target),
-        benchmarkName: name,
-        benchmarkNameEn: name,
-        updatedAt: new Date().toISOString(),
-      };
-      return existing
-        ? previous.map((dialogue) => dialogue.id === id ? renamed : dialogue)
-        : [renamed, ...previous];
-    });
-    void getQueryClient()?.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEYS.lists() });
+    const previousName = target.benchmarkName;
+    const previousNameEn = target.benchmarkNameEn;
+    setSocketDialogues((previous) =>
+      previous.map((dialogue) =>
+        dialogue.id === id ? { ...dialogue, benchmarkName: name, benchmarkNameEn: name } : dialogue,
+      ),
+    );
+    try {
+      await updateConversation(target.conversationId, { title: name });
+      void getQueryClient()?.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEYS.lists() });
+    } catch {
+      setSocketDialogues((previous) =>
+        previous.map((dialogue) =>
+          dialogue.id === id
+            ? { ...dialogue, benchmarkName: previousName, benchmarkNameEn: previousNameEn }
+            : dialogue,
+        ),
+      );
+    }
   }, [dialogues]);
 
   const toggleArchive = useCallback(async (id: string) => {
     const target = dialogues.find((dialogue) => dialogue.id === id);
     if (!target?.conversationId) return;
     const next = !target.isArchived;
-    await updateConversation(target.conversationId, { isArchived: next });
     setSocketDialogues((previous) => {
-      const exists = previous.some((dialogue) => dialogue.id === id);
-      return exists
+      return previous.some((dialogue) => dialogue.id === id)
         ? previous.map((dialogue) => dialogue.id === id ? { ...dialogue, isArchived: next } : dialogue)
         : [{ ...target, isArchived: next }, ...previous];
     });
-    void getQueryClient()?.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEYS.lists() });
+    try {
+      await updateConversation(target.conversationId, { isArchived: next });
+      void getQueryClient()?.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEYS.lists() });
+    } catch {
+      setSocketDialogues((previous) =>
+        previous.map((dialogue) =>
+          dialogue.id === id ? { ...dialogue, isArchived: !next } : dialogue,
+        ),
+      );
+    }
   }, [dialogues]);
 
   const sendMessage = useCallback(

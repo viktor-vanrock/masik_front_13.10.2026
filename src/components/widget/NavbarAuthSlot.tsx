@@ -1,6 +1,3 @@
-// NavbarAuthSlot — auth-секция навбара: скелетон (initializing) · «Войти» (anonymous) ·
-// retry (error) · аватар/роль/logout (authenticated).
-
 import { Link, useLocation } from 'react-router-dom';
 import { RotateCw, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/auth';
@@ -9,31 +6,24 @@ import { ROUTES } from '@/routes/routes.constants';
 
 export function NavbarAuthSlot() {
   const { status, user, retry } = useAuth();
-  const { t, isAdmin } = useApp();
+  const { t } = useApp();
   const location = useLocation();
 
   if (status === 'initializing') {
     return (
-      <div className="nex-navbar__skeleton animate-pulse">
-        <div
-          className="nex-navbar__skeleton-name"
-          style={{ backgroundColor: 'var(--bg-elevated)' }}
-        />
-        <div
-          className="nex-navbar__skeleton-avatar"
-          style={{ backgroundColor: 'var(--bg-elevated)' }}
-        />
+      <div className="flex items-center gap-[9px] animate-pulse">
+        <div className="w-[90px] h-3 rounded-md" style={{ backgroundColor: 'var(--bg-elevated)' }} />
+        <div className="w-8 h-8 rounded-full" style={{ backgroundColor: 'var(--bg-elevated)' }} />
       </div>
     );
   }
 
-  // error ≠ anonymous: сессия неизвестна (network/5xx) — показываем retry, не «Войти».
   if (status === 'error') {
     return (
       <button
         onClick={retry}
         title={t.auth.sessionErrorTitle}
-        className="nex-navbar__retry"
+        className="inline-flex min-h-[40px] items-center gap-[7px] border-0 rounded-[20px] px-3.5 py-2 text-xs no-underline"
         style={{ color: 'var(--text-muted)', backgroundColor: 'var(--bg-elevated)' }}
       >
         <RotateCw size={14} />
@@ -47,7 +37,7 @@ export function NavbarAuthSlot() {
       <Link
         to={ROUTES.LOGIN}
         state={{ from: location }}
-        className="nex-navbar__login"
+        className="inline-flex min-h-[44px] items-center justify-center gap-2 border border-[#515dad] rounded-[20px] px-[18px] py-2.5 bg-[#515dad] text-white text-[13px] font-medium no-underline whitespace-nowrap transition-colors duration-150 hover:border-[#465195] hover:bg-[#465195]"
       >
         {t.nav.login}
         <ArrowRight size={14} />
@@ -55,44 +45,22 @@ export function NavbarAuthSlot() {
     );
   }
 
-  /* authenticated */
   return (
-    <div className="nex-navbar__authenticated">
-      {isAdmin && (
-        <Link
-          to={ROUTES.ADMIN}
-          className="nex-navbar__admin"
-          style={{
-            backgroundColor: location.pathname.startsWith(ROUTES.ADMIN)
-              ? 'var(--bg-blue-tint)'
-              : 'transparent',
-            color: location.pathname.startsWith(ROUTES.ADMIN)
-              ? 'var(--accent)'
-              : 'var(--text-muted)',
-          }}
-          title={t.admin.title}
-        >
-          <span>{t.nav.adminPanel}</span>
-        </Link>
-      )}
-
+    <div className="flex items-center gap-3">
       <Link
         to={ROUTES.PROFILE}
-        className="nex-navbar__user"
+        className="inline-flex max-w-[190px] items-center gap-[9px] text-[#1e1e20] text-[13px] no-underline"
         aria-label={`Личный кабинет: ${user?.username ?? ''}`}
       >
-        <span className="nex-navbar__avatar">{user?.username?.slice(0, 1).toUpperCase()}</span>
-        <span className="nex-navbar__username">{user?.username}</span>
+        <span className="grid w-8 h-8 flex-none place-items-center border border-[#dce0ee] rounded-full bg-[#f3f6fa] text-[#515dad] text-xs font-semibold">
+          {user?.username?.slice(0, 1).toUpperCase()}
+        </span>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap">{user?.username}</span>
       </Link>
-
-      {/* Logout remains available from the profile; header keeps only the account name. */}
     </div>
   );
 }
 
-/**
- * NavbarAuthSlotMobile — та же логика для мобильного меню.
- */
 interface MobileProps {
   onClose: () => void;
 }
@@ -103,8 +71,8 @@ export function NavbarAuthSlotMobile({ onClose }: MobileProps) {
 
   if (status === 'initializing') {
     return (
-      <div className="nex-navbar__mobile-skeleton animate-pulse">
-        <div />
+      <div className="flex min-h-[44px] items-center px-3 animate-pulse">
+        <div className="w-[130px] h-3 rounded-md bg-[#e9edf2]" />
       </div>
     );
   }
@@ -113,7 +81,7 @@ export function NavbarAuthSlotMobile({ onClose }: MobileProps) {
     return (
       <button
         onClick={retry}
-        className="nex-navbar__mobile-retry"
+        className="flex min-h-[44px] items-center border-0 rounded-lg px-3 bg-transparent text-sm text-left font-[inherit]"
         style={{ color: 'var(--text-muted)' }}
       >
         <RotateCw size={14} />
@@ -127,7 +95,7 @@ export function NavbarAuthSlotMobile({ onClose }: MobileProps) {
       <Link
         to={ROUTES.LOGIN}
         onClick={onClose}
-        className="nex-navbar__login"
+        className="inline-flex self-start min-h-[44px] items-center justify-center gap-2 mt-2 border border-[#515dad] rounded-[20px] px-[18px] py-2.5 bg-[#515dad] text-white text-[13px] font-medium no-underline whitespace-nowrap transition-colors duration-150 hover:border-[#465195] hover:bg-[#465195]"
       >
         {t.nav.login}
         <ArrowRight size={14} />
@@ -141,7 +109,7 @@ export function NavbarAuthSlotMobile({ onClose }: MobileProps) {
         <Link
           to={ROUTES.ADMIN}
           onClick={onClose}
-          className="nex-navbar__mobile-admin"
+          className="flex min-h-[44px] items-center border-0 rounded-lg px-3 bg-transparent text-sm text-left font-[inherit]"
           style={{ color: 'var(--accent)' }}
         >
           {t.admin.title}
@@ -150,9 +118,11 @@ export function NavbarAuthSlotMobile({ onClose }: MobileProps) {
       <Link
         to={ROUTES.PROFILE}
         onClick={onClose}
-        className="nex-navbar__mobile-user"
+        className="flex min-h-[44px] items-center gap-2.5 text-[#1e1e20] no-underline"
       >
-        <span className="nex-navbar__avatar">{user?.username?.slice(0, 1).toUpperCase()}</span>
+        <span className="grid w-8 h-8 flex-none place-items-center border border-[#dce0ee] rounded-full bg-[#f3f6fa] text-[#515dad] text-xs font-semibold">
+          {user?.username?.slice(0, 1).toUpperCase()}
+        </span>
         <span>{user?.username}</span>
       </Link>
     </>

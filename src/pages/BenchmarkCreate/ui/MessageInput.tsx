@@ -8,13 +8,10 @@ interface Props {
   isTyping: boolean;
   status?: DialogueStatus;
   completionKind?: DialogueCompletionKind;
-  awaitingStructuredAnswer: boolean;
-  showSkipButton: boolean;
   doneMessage: string;
   onSend: () => void;
-  onChange: (value: string) => void; 
+  onChange: (value: string) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
-  onSkip: () => void;
 }
 
 export const MessageInput = ({
@@ -33,7 +30,7 @@ export const MessageInput = ({
     if (completionKind === DialogueCompletionKind.Create) {
       return null;
     }
-    
+
     return (
       <div
         className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm"
@@ -48,17 +45,11 @@ export const MessageInput = ({
       </div>
     );
   }
-  
+
   return (
-    <div className="benchmark-chat-input space-y-2">
-      <div
-        className="benchmark-chat-input__field flex gap-3 items-end rounded-xl p-3"
-        style={{
-          backgroundColor: 'var(--bg-elevated)',
-          border: '1px solid var(--border)',
-        }}
-      >
-        <div className="benchmark-chat-input__content">
+    <div className="space-y-2">
+      <div className="flex gap-3 items-end h-[77px] min-h-[77px] border border-[#d1d7de] rounded-[20px] px-4 py-3 bg-white shadow-[0_12px_40px_-20px_#1e1e2030] max-[600px]:px-4">
+        <div className="flex min-w-0 flex-1 items-center">
           <textarea
             id="benchmark-chat-answer"
             value={inputValue}
@@ -66,11 +57,8 @@ export const MessageInput = ({
             onKeyDown={onKeyDown}
             placeholder={lang === 'ru' ? 'Сообщение...' : 'Message...'}
             rows={2}
-            className="flex-1 text-sm bg-transparent resize-none outline-none min-h-[24px] max-h-32"
-            style={{
-              lineHeight: '1.5',
-              color: 'var(--text-primary)',
-            }}
+            className="w-full min-h-[44px] max-h-[44px] py-1.5 px-0 border-0 bg-transparent text-[13px] text-[#1e1e20] leading-[1.5] resize-none outline-none shadow-none focus-visible:outline-none focus-visible:shadow-none max-[600px]:text-base"
+            style={{ scrollbarWidth: 'thin', scrollbarColor: '#BFB8E5 transparent' }}
           />
         </div>
         <button
@@ -78,38 +66,13 @@ export const MessageInput = ({
           onClick={onSend}
           disabled={!inputValue.trim() || isTyping}
           aria-label={t.create.send}
-          className="benchmark-chat-input__send p-2 rounded-full transition-colors flex-shrink-0"
-          style={{
-            backgroundColor: '#515dad',
-            color: '#fff',
-          }}
+          className="grid w-[42px] h-[42px] flex-none place-items-center rounded-full bg-[#515dad] text-white cursor-pointer transition-colors duration-150 hover:bg-[#465195] disabled:bg-[#515dad] disabled:opacity-65"
         >
-          <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 9h10m-4-4 4 4-4 4" /></svg>
+          <svg viewBox="0 0 18 18" aria-hidden="true" className="w-[18px] h-[18px] fill-none stroke-current [stroke-width:1.8] [stroke-linecap:round] [stroke-linejoin:round]">
+            <path d="M4 9h10m-4-4 4 4-4 4" />
+          </svg>
         </button>
-      </div>
-      <div
-        className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-end"
-      >
-        {/* {showSkipButton && (
-          <button
-            type="button"
-            onClick={onSkip}
-            disabled={isTyping}
-            className="text-xs font-medium inline-flex items-center gap-1 disabled:opacity-50"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <PlusCircle size={12} />
-            {t.create.createOwnBenchmark}
-          </button>
-        )} */}
-        {/* <p className="text-xs text-center sm:text-right" style={{ color: 'var(--text-dim)' }}>
-          {awaitingStructuredAnswer
-            ? t.create.optionalAnswerHint
-            : lang === 'ru'
-              ? 'Enter — отправить, Shift+Enter — перенос строки'
-              : 'Enter to send, Shift+Enter for new line'}
-        </p> */}
       </div>
     </div>
   );
-}
+};

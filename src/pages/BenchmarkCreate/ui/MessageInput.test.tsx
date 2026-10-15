@@ -13,13 +13,10 @@ describe('MessageInput benchmark creation', () => {
     const props = {
       inputValue: '',
       isTyping: false,
-      awaitingStructuredAnswer: true,
-      showSkipButton: true,
       doneMessage: '',
       onSend,
       onChange: vi.fn(),
       onKeyDown: vi.fn(),
-      onSkip: vi.fn(),
     };
 
     render(<MessageInput {...props} />);
@@ -32,13 +29,10 @@ describe('MessageInput benchmark creation', () => {
     render(<MessageInput
       inputValue="А что означает эта метрика?"
       isTyping={false}
-      awaitingStructuredAnswer
-      showSkipButton={false}
       doneMessage=""
       onSend={onSend}
       onChange={vi.fn()}
       onKeyDown={vi.fn()}
-      onSkip={vi.fn()}
     />);
     expect(screen.getByRole('textbox')).toBeEnabled();
     const sendButton = screen.getByRole('button', { name: translations.ru.create.send });

@@ -3,7 +3,6 @@ import { Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ROUTES } from '@/routes/routes.constants';
 import { NavbarAuthSlot, NavbarAuthSlotMobile } from './NavbarAuthSlot';
-import './Navbar.css';
 
 const navLinks = [
   { to: ROUTES.DASHBOARD, label: 'Лидерборд' },
@@ -13,7 +12,7 @@ const navLinks = [
 
 function NexTestLogo() {
   return (
-    <svg className="nex-navbar__logo" viewBox="0 0 592 144" fill="none" aria-hidden="true">
+    <svg className="block w-[140px] h-auto max-[520px]:w-[120px]" viewBox="0 0 592 144" fill="none" aria-hidden="true">
       <g fill="#202431">
         <path d="M20 120V20H39L83 89V20H102V120H83L39 51V120Z" />
         <path fillRule="evenodd" d="M186 89H135C136 102 143 108 154 108C163 108 169 105 175 100L185 112C177 119 167 123 154 123C130 123 115 108 115 84C115 61 130 46 152 46C174 46 187 61 187 84C187 86 187 88 186 89ZM135 76H168C167 65 162 60 152 60C143 60 137 65 135 76Z" />
@@ -36,8 +35,6 @@ export function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Переключатели языка и темы временно скрыты, исходная логика сохранена в git-истории.
-
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileOpen(false);
@@ -48,32 +45,37 @@ export function Navbar() {
       ? location.pathname === ROUTES.HOME
       : location.pathname === path || location.pathname.startsWith(`${path}/`);
 
+  const linkClass = (active: boolean) =>
+    `relative inline-flex h-full items-center text-sm whitespace-nowrap transition-colors duration-150 max-[1080px]:text-[13px] ${
+      active ? 'text-[#515dad]' : 'text-[#686e78] hover:text-[#515dad]'
+    }`;
+
   return (
-    <header className="nex-navbar">
-      <div className="nex-navbar__inner">
-        <Link to={ROUTES.HOME} className="nex-navbar__brand" aria-label="NexTest — главная">
+    <header className="sticky top-0 z-50 border-b border-[#e9edf2] bg-white/[.93] backdrop-blur-[16px]">
+      <div className="flex h-20 max-w-[1360px] mx-auto items-center justify-between gap-6 px-10 max-[1080px]:gap-[18px] max-[1080px]:px-6 max-[860px]:h-[68px] max-[860px]:px-5 max-[520px]:px-4">
+        <Link to={ROUTES.HOME} className="flex flex-none items-center no-underline" aria-label="NexTest — главная">
           <NexTestLogo />
         </Link>
 
-        <nav className="nex-navbar__links" aria-label="Основная навигация">
+        <nav className="hidden max-[860px]:!hidden md:flex h-full items-center gap-7 max-[1080px]:gap-[18px]" aria-label="Основная навигация">
           {navLinks.map(({ to, label }) => (
-            <Link key={to} to={to} className={isActive(to) ? 'is-active' : undefined} aria-current={isActive(to) ? 'page' : undefined}>
+            <Link key={to} to={to} className={linkClass(isActive(to))} aria-current={isActive(to) ? 'page' : undefined}>
               {label}
             </Link>
           ))}
-          <button type="button" className="nex-navbar__inert-link">Оценить модель</button>
-          {/* Гайд и FAQ временно скрыт; ссылка сохранена для быстрого возврата.
-          <Link to={ROUTES.GUIDE} className={isActive(ROUTES.GUIDE) ? 'is-active' : undefined} aria-current={isActive(ROUTES.GUIDE) ? 'page' : undefined}>
-            Гайд и FAQ
-          </Link>
-          */}
+          <button
+            type="button"
+            className="inline-flex h-full items-center border-0 p-0 bg-transparent text-[#686e78] text-sm whitespace-nowrap transition-colors duration-150 hover:text-[#515dad] font-[inherit] max-[1080px]:text-[13px]"
+          >
+            Оценить модель
+          </button>
         </nav>
 
-        <div className="nex-navbar__actions">
+        <div className="flex flex-none items-center gap-3">
           <NavbarAuthSlot />
           <button
             type="button"
-            className="nex-navbar__mobile-toggle"
+            className="hidden max-[860px]:inline-grid w-10 h-10 place-items-center border border-[#e9edf2] rounded-[10px] bg-white text-[#515dad] cursor-pointer"
             aria-label={mobileOpen ? 'Закрыть меню' : 'Открыть меню'}
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((open) => !open)}
@@ -84,18 +86,25 @@ export function Navbar() {
       </div>
 
       {mobileOpen && (
-        <nav className="nex-navbar__mobile-menu" aria-label="Мобильная навигация">
+        <nav className="hidden max-[860px]:flex flex-col gap-0.5 border-t border-[#e9edf2] px-5 pb-4 pt-2.5 bg-white" aria-label="Мобильная навигация">
           {navLinks.map(({ to, label }) => (
-            <Link key={to} to={to} onClick={() => setMobileOpen(false)} className={isActive(to) ? 'is-active' : undefined}>
+            <Link
+              key={to}
+              to={to}
+              onClick={() => setMobileOpen(false)}
+              className={`flex min-h-[44px] items-center rounded-lg px-3 text-sm no-underline font-[inherit] ${
+                isActive(to) ? 'bg-[#eeeff7] text-[#515dad]' : 'text-[#686e78]'
+              }`}
+            >
               {label}
             </Link>
           ))}
-          <button type="button" className="nex-navbar__inert-link">Оценить модель</button>
-          {/* Гайд и FAQ временно скрыт; ссылка сохранена для быстрого возврата.
-          <Link to={ROUTES.GUIDE} onClick={() => setMobileOpen(false)} className={isActive(ROUTES.GUIDE) ? 'is-active' : undefined}>
-            Гайд и FAQ
-          </Link>
-          */}
+          <button
+            type="button"
+            className="flex min-h-[44px] items-center rounded-lg px-3 border-0 bg-transparent text-[#686e78] text-sm text-left font-[inherit]"
+          >
+            Оценить модель
+          </button>
           <NavbarAuthSlotMobile onClose={() => setMobileOpen(false)} />
         </nav>
       )}
