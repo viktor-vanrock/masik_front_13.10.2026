@@ -8,48 +8,36 @@ vi.mock('@/hooks/useApp', () => ({
 }));
 
 describe('MessageInput benchmark creation', () => {
-  it('shows one creation action while recommendations await a choice', () => {
-    const onSkip = vi.fn();
+  it('renders textarea and send button, send is disabled when empty', () => {
+    const onSend = vi.fn();
     const props = {
       inputValue: '',
       isTyping: false,
-      awaitingStructuredAnswer: true,
-      showSkipButton: true,
       doneMessage: '',
-      onSend: vi.fn(),
+      onSend,
       onChange: vi.fn(),
       onKeyDown: vi.fn(),
-      onSkip,
     };
 
-    const { rerender } = render(<MessageInput {...props} />);
-    const createButtons = screen.getAllByRole('button', {
-      name: translations.ru.create.createOwnBenchmark,
-    });
-    expect(createButtons).toHaveLength(1);
-    fireEvent.click(createButtons[0]);
-    expect(onSkip).toHaveBeenCalledOnce();
-
-    rerender(<MessageInput {...props} isTyping />);
-    expect(screen.getByRole('button', { name: translations.ru.create.createOwnBenchmark })).toBeDisabled();
+    render(<MessageInput {...props} />);
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: translations.ru.create.send })).toBeDisabled();
   });
 
-  it('allows a free-form response alongside optional structured choices', () => {
+  it('enables send button with text and fires onSend on click', () => {
     const onSend = vi.fn();
     render(<MessageInput
       inputValue="А что означает эта метрика?"
       isTyping={false}
-      awaitingStructuredAnswer
-      showSkipButton={false}
       doneMessage=""
       onSend={onSend}
       onChange={vi.fn()}
       onKeyDown={vi.fn()}
-      onSkip={vi.fn()}
     />);
     expect(screen.getByRole('textbox')).toBeEnabled();
-    fireEvent.click(screen.getByRole('button', { name: translations.ru.create.send }));
+    const sendButton = screen.getByRole('button', { name: translations.ru.create.send });
+    expect(sendButton).toBeEnabled();
+    fireEvent.click(sendButton);
     expect(onSend).toHaveBeenCalledOnce();
-    expect(screen.getByText(translations.ru.create.optionalAnswerHint)).toBeInTheDocument();
   });
 });

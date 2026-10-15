@@ -1,32 +1,28 @@
-import { DialogueStatus } from '@/types';
-import { MessageSquare, Clock, CheckCircle2 } from 'lucide-react';
-import { STATUS_CONFIG } from '../../consts';
+import type { DisplayStatus } from '@/types';
+import { DISPLAY_STATUS_CONFIG } from '../../consts';
 import { useApp } from '@/hooks/useApp';
 
 interface Props {
-  status: DialogueStatus;
+  status: DisplayStatus;
 }
-
-const STATUS_ICON: Record<DialogueStatus, React.ReactNode> = {
-  [DialogueStatus.Interview]: <MessageSquare size={11} />,
-  [DialogueStatus.InProgress]: <Clock size={11} />,
-  [DialogueStatus.Done]: <CheckCircle2 size={11} />,
-};
 
 export const StatusBadge = ({ status }: Props) => {
   const { lang } = useApp();
-  const cfg = STATUS_CONFIG[status];
+  const cfg = DISPLAY_STATUS_CONFIG[status];
+  const colors = cfg.tone === 'green'
+    ? { backgroundColor: '#e5f4ee', color: '#0c7055' }
+    : cfg.tone === 'brand'
+      ? { backgroundColor: '#eeeff7', color: '#3a427b' }
+      : { backgroundColor: '#f3f6fa', color: '#686e78' };
 
   return (
     <span
-      className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0"
+      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md flex-shrink-0 whitespace-nowrap"
       style={{
-        backgroundColor: `var(${cfg.bgVar})`,
-        color: `var(${cfg.colorVar})`,
-        border: '1px solid var(--border-strong)',
+        ...colors,
+        fontSize: '10px',
       }}
     >
-      {STATUS_ICON[status]}
       {lang === 'ru' ? cfg.label.ru : cfg.label.en}
     </span>
   );

@@ -1,16 +1,11 @@
-import { StructuredPromptBlock } from './StructuredPromptBlock';
 import { RecommendationCard } from './RecommendationCard';
-import { QuickReplyBar } from './QuickReplyBar';
 import type { BenchmarkType, ChatMessage } from '@/types';
 import { useApp } from '@/hooks/useApp';
 
 interface Props {
   msg: ChatMessage;
   benchmarks: BenchmarkType[];
-  onQuickReply: (text: string) => void;
-  quickReplyDisabled: boolean;
   recommendationDisabled?: boolean;
-  onOptionSelect?: (id: string, label: string) => void;
   onAcceptRecommendation?: (recommendationId: string) => void;
   onRejectRecommendation?: (recommendationId: string) => void;
 }
@@ -18,73 +13,26 @@ interface Props {
 export const MessageBubble = ({
   msg,
   benchmarks,
-  onQuickReply,
-  quickReplyDisabled,
   recommendationDisabled,
-  onOptionSelect,
   onAcceptRecommendation,
   onRejectRecommendation,
 }: Props) => {
-  const { t: { create } } = useApp();
+  const { lang, t: { create } } = useApp();
   const isUser = msg.role === 'user';
+  const variants = msg.agentOptions?.map((option) => option.label)
+    ?? msg.structuredPrompt?.options.map((option) => option.label)
+    ?? msg.quickReplies
+    ?? [];
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-      {!isUser && (
-        <div
-          className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mr-3 mt-0.5"
-          style={{
-            background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))',
-          }}
-        >
-          M
-        </div>
-      )}
-
-      <div
-        className={`max-w-[85%] md:max-w-[75%] flex flex-col gap-2 ${isUser ? 'items-end' : 'items-start'}`}
-      >
-        <div
-          className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-            isUser ? 'rounded-tr-sm' : 'rounded-tl-sm'
-          }`}
-          style={{
-            backgroundColor: isUser ? 'var(--accent)' : 'var(--bg-card)',
-            color: isUser ? 'var(--white)' : 'var(--text-primary)',
-            border: isUser ? 'none' : '1px solid var(--border)',
-          }}
-        >
-          {msg.content}
-        </div>
-
-        {!isUser && msg.structuredPrompt && (
-          <StructuredPromptBlock
-            prompt={msg.structuredPrompt}
-            interview={create.interview}
-            onPick={onQuickReply}
-            disabled={quickReplyDisabled}
-          />
-        )}
-
-        {!isUser && msg.agentOptions && msg.agentOptions.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {msg.agentOptions.map((opt, i) => (
-              <button
-                key={opt.id || `opt-${i}`}
-                type="button"
-                disabled={quickReplyDisabled}
-                onClick={() => onOptionSelect?.(opt.id, opt.label)}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
-                style={{
-                  backgroundColor: 'var(--bg-blue-tint)',
-                  color: 'var(--text-blue-on-bg)',
-                  border: '1px solid var(--border)',
-                }}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+    <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div className={`flex w-fit max-w-[90%] flex-col gap-2 rounded-[20px] text-[13px] leading-[1.8] [overflow-wrap:anywhere] max-[600px]:rounded-2xl max-[600px]:p-5 ${isUser ? 'bg-[#eeeff7] px-[22px] py-4 max-[600px]:px-[18px] max-[600px]:py-3.5 text-[#1e1e20]' : 'bg-[#f3f6fa] px-7 py-6 text-[#1e1e20]'}`}>
+        <p className="m-0 whitespace-pre-wrap">{msg.content}</p>
+        {!isUser && variants.length > 0 && (
+          <p className="m-0 text-[13px] leading-[1.6] text-[#1e1e20]">
+            <strong>{lang === 'ru' ? 'Варианты:' : 'Options:'}</strong>{' '}
+            {variants.join(' · ')}
+          </p>
         )}
 
         {!isUser && msg.recommendations && msg.recommendations.length > 0 && (
@@ -106,20 +54,13 @@ export const MessageBubble = ({
                     ? msg.recommendationStatus : undefined)}
                   onAccept={onAcceptRecommendation}
                   onReject={onRejectRecommendation}
-                  disabled={recommendationDisabled ?? quickReplyDisabled}
+                  disabled={recommendationDisabled ?? false}
                 />
               );
             })}
           </div>
         )}
 
-        {!isUser && msg.quickReplies && msg.quickReplies.length > 0 && (
-          <QuickReplyBar
-            labels={msg.quickReplies}
-            onPick={onQuickReply}
-            disabled={quickReplyDisabled}
-          />
-        )}
       </div>
     </div>
   );

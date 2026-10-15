@@ -22,6 +22,17 @@ export async function getConversation(id: string): Promise<ConversationDetailDto
   return data;
 }
 
+export async function updateConversation(
+  id: string,
+  data: { title?: string; isArchived?: boolean },
+): Promise<ConversationDto> {
+  const { data: result } = await httpClient.patch<ConversationDto>(
+    BACKEND_PATHS.conversations.detail(id),
+    data,
+  );
+  return result;
+}
+
 export async function getConversationGeneration(id: string): Promise<ConversationGenerationDto> {
   const { data } = await httpClient.get<ConversationGenerationDto>(
     BACKEND_PATHS.conversations.generation(id),

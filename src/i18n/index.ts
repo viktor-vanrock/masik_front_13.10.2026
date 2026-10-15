@@ -381,7 +381,7 @@ export const translations = {
     },
     create: {
       title: 'Рекомендация бенчмарка',
-      newChat: 'Новая сессия',
+      newChat: 'Новый чат',
       myDialogues: 'Мои сессии',
       placeholder: 'Введите сообщение...',
       send: 'Отправить',
@@ -1250,7 +1250,7 @@ export const translations = {
     },
     create: {
       title: 'Benchmark recommendation',
-      newChat: 'New Session',
+      newChat: 'New Chat',
       myDialogues: 'My Sessions',
       placeholder: 'Type a message...',
       send: 'Send',

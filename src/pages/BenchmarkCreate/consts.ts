@@ -1,4 +1,4 @@
-import { DialogueStatus } from "@/types";
+import { DialogueStatus, DisplayStatus } from "@/types";
 
 export type PublishStage = 'idle' | 'producing' | 'confirm' | 'submitted';
 
@@ -49,5 +49,39 @@ export const STATUS_CONFIG: Record<
     label: { ru: 'Готово', en: 'Done' },
     colorVar: '--success',
     bgVar: '--status-done-bg',
+  },
+};
+
+export const DISPLAY_STATUS_CONFIG: Record<
+  DisplayStatus,
+  { label: { ru: string; en: string }; tone: 'neutral' | 'brand' | 'green' }
+> = {
+  [DisplayStatus.Draft]: {
+    label: { ru: 'Уточнение требований', en: 'Draft' },
+    tone: 'neutral',
+  },
+  [DisplayStatus.Summary]: {
+    label: { ru: 'Ожидает подтверждения', en: 'Awaiting confirmation' },
+    tone: 'neutral',
+  },
+  [DisplayStatus.Generating]: {
+    label: { ru: 'Изобретатель работает', en: 'Generating' },
+    tone: 'brand',
+  },
+  [DisplayStatus.Samples]: {
+    label: { ru: 'Примеры на проверке', en: 'Samples review' },
+    tone: 'neutral',
+  },
+  [DisplayStatus.Producing]: {
+    label: { ru: 'Подготовка набора', en: 'Producing' },
+    tone: 'brand',
+  },
+  [DisplayStatus.Ready]: {
+    label: { ru: 'Набор готов', en: 'Ready' },
+    tone: 'green',
+  },
+  [DisplayStatus.Submitted]: {
+    label: { ru: 'Ожидает рассмотрения', en: 'Submitted' },
+    tone: 'green',
   },
 };

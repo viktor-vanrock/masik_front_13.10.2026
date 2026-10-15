@@ -20,15 +20,16 @@ export default defineConfig(({ mode }) => {
       port: devPort,
       host: devHost,
       proxy: {
-        [proxyPrefix]: {
-          target: proxyTarget,
-          changeOrigin: true,
-        },
         '/api/socket.io': {
           target: proxyTarget,
           ws: true,
           changeOrigin: true,
           rewriteWsOrigin: true,
+        },
+        [proxyPrefix]: {
+          target: proxyTarget,
+          ws: true,
+          changeOrigin: true,
         },
       },
     },

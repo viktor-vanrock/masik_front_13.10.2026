@@ -66,14 +66,23 @@ export interface ConversationDto {
   id: string;
   status: ConversationStatus;
   intent?: 'find_existing' | 'create_new' | null;
+  title?: string | null;
+  isArchived?: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CatalogSubmissionDto {
+  id: string;
+  status: 'validation' | 'published' | 'rejected';
+  submittedAt: string;
 }
 
 export interface ConversationDetailDto extends ConversationDto {
   messages: MessageDto[];
   recommendations: RecommendationDto[];
   recommendationRequests: RecommendationRequestDto[];
+  catalogSubmission?: CatalogSubmissionDto | null;
 }
 
 export type ConversationsListRaw =
