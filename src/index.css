@@ -224,6 +224,8 @@ select option {
 
   * {
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #BFB8E5 transparent;
   }
 
   body {
@@ -238,16 +240,17 @@ select option {
   }
 
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 10px;
+    width: 4px;
+    height: 4px;
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--bg-elevated);
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--border-strong);
-    border-radius: 3px;
+    background: #BFB8E5;
+    border-radius: 999px;
   }
+
 }

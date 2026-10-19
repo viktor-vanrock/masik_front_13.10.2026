@@ -10,7 +10,7 @@ const navLinks = [
   { to: ROUTES.CREATE, label: 'Создать бенчмарк' },
 ] as const;
 
-function NexTestLogo() {
+export function NexTestLogo() {
   return (
     <svg className="block w-[140px] h-auto max-[520px]:w-[120px]" viewBox="0 0 592 144" fill="none" aria-hidden="true">
       <g fill="#202431">
