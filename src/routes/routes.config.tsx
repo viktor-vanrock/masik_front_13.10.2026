@@ -1,12 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 import { lazy, Suspense } from "react";
 import type { ReactNode } from "react";
-import { useParams } from "react-router-dom";
 import type { RouteObject } from "react-router-dom";
 import { ROUTES } from './routes.constants';
 import { LayoutWrapper } from "../components/layout/Layout";
 
-import { MockBenchmarkDetailRoute, MockCatalog } from "@/pages/BenchmarksCatalogue/MockCatalog";
+import { Catalog, RedesignedBenchmarkDetail } from "@/pages/BenchmarksCatalogue/Catalog";
 import { Guide } from "@/pages/Guide";
 import { Login } from "@/pages/Login";
 import { Register } from "@/pages/Register";
@@ -17,9 +16,6 @@ import { AdminGuard } from "@/components/layout/AdminGuard";
 import { AuthGuard } from "@/components/layout/AuthGuard";
 
 // Lazy — loaded only when their route is matched (code-splitting).
-const BenchmarkDetail = lazy(() =>
-  import("@/pages/BenchmarkDetail").then((m) => ({ default: m.BenchmarkDetail })),
-);
 const Dashboard = lazy(() =>
   import("@/pages/Dashboard").then((m) => ({ default: m.Dashboard })),
 );
@@ -42,17 +38,14 @@ const AdminSettings = lazy(() =>
 const withSuspense = (node: ReactNode) => <Suspense fallback={null}>{node}</Suspense>;
 
 function BenchmarkRoute() {
-  const { id } = useParams<{ id: string }>();
-  return id?.startsWith('mock-')
-    ? <MockBenchmarkDetailRoute />
-    : withSuspense(<BenchmarkDetail />);
+  return <RedesignedBenchmarkDetail />;
 }
 
 export const routes: RouteObject[] = [
   {
     element: <LayoutWrapper />,
     children: [
-      { path: ROUTES.HOME, element: <MockCatalog /> },
+      { path: ROUTES.HOME, element: <Catalog /> },
       { path: ROUTES.GUIDE, element: <Guide /> },
       { path: ROUTES.BENCHMARK(":id"), element: <BenchmarkRoute /> },
       { path: ROUTES.DASHBOARD, element: withSuspense(<Dashboard />) },
