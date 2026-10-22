@@ -7,7 +7,7 @@ import { deriveDisplayStatus } from '../../utils/deriveDisplayStatus';
 import { useApp } from '@/hooks/useApp';
 import { usePublishState } from './hooks/usePublishState';
 import { useConversation } from './hooks/useConversation';
-import { loadDerivedIntent } from './utils/derivedIntent';
+import { loadDerivedIntent, type DerivedIntent } from './utils/derivedIntent';
 import { CreateHeader } from '../CreateHeader';
 import { MessageBubble } from '../MessageBubble';
 import { TypingIndicator } from '@components/ui';
@@ -115,6 +115,8 @@ export const CreateContent = () => {
   const derivedMode: DerivedMode | null = requestedMode === 'modify' || requestedMode === 'russify' ? requestedMode : null;
   const baseId = params.get('base') ?? savedIntent?.baseId ?? null;
   const baseType = params.get('baseType') ?? savedIntent?.baseType ?? null;
+  const resolvedBaseType: DerivedIntent['baseType'] | null =
+    baseType === 'suite' || baseType === 'test' ? baseType : null;
   const derivedEntry = Boolean(derivedMode && baseId);
   const detectBaseType = baseType !== 'suite' && baseType !== 'test';
   const entryIntentKey = derivedEntry ? `${derivedMode}:${baseType || 'auto'}:${baseId}:${params.get('new') || ''}` : undefined;
@@ -135,10 +137,10 @@ export const CreateContent = () => {
   const entryTitle = derivedEntry && source
     ? source.name
     : undefined;
-  const entryDerivedIntent = useMemo(() =>
-    derivedEntry && (baseType === 'suite' || baseType === 'test') && derivedMode && baseId
-      ? { mode: derivedMode, baseId, baseType } : null,
-  [derivedEntry, baseType, derivedMode, baseId]);
+  const entryDerivedIntent = useMemo<DerivedIntent | null>(() =>
+    derivedEntry && resolvedBaseType && derivedMode && baseId
+      ? { mode: derivedMode, baseId, baseType: resolvedBaseType } : null,
+  [derivedEntry, resolvedBaseType, derivedMode, baseId]);
 
   /**
    * Recommendation events contain canonical BenchmarkTest IDs from backend.
