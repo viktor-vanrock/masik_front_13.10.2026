@@ -45,9 +45,22 @@ import {
   mergeConversationMessages,
   formatRecommendationExplanations,
 } from '../utils/conversationUtils';
-import { saveDerivedIntent, type DerivedIntent } from '../utils/derivedIntent';
+import { loadEntrySession, removeEntrySession, saveDerivedIntent, saveEntrySession, type DerivedIntent } from '../utils/derivedIntent';
 
-export function useConversation(entryIntentKey?: string, entryReady = true, entryTitle?: string, derivedIntent?: DerivedIntent | null) {
+type UseConversationOptions = {
+  entryIntentKey?: string;
+  entryReady?: boolean;
+  entryTitle?: string;
+  derivedIntent?: DerivedIntent | null;
+};
+
+type PendingNewChat = {
+  entryIntentKey?: string;
+  entryTitle?: string;
+  derivedIntent?: DerivedIntent;
+};
+
+export function useConversation({ entryIntentKey, entryReady = true, entryTitle, derivedIntent }: UseConversationOptions = {}) {
   const { t, status, user } = useApp();
   const userId = status === 'authenticated' ? user?.id ?? null : null;
   const location = useLocation();
@@ -62,19 +75,18 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
   const [pendingSearchConversationId, setPendingSearchConversationId] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [entryConversationId, setEntryConversationId] = useState<string | null>(entryIntentKey ? requestedSessionId : null);
+  const [entryAttemptVersion, setEntryAttemptVersion] = useState(0);
   const locationRef = useRef(location);
   const navigateRef = useRef(navigate);
-  const entryTitleRef = useRef(entryTitle);
-  const derivedIntentRef = useRef(derivedIntent);
-  const entryStartPendingRef = useRef(false);
+  const entryIntentKeyRef = useRef(entryIntentKey);
+  const startedEntryIntentRef = useRef<string | null>(null);
   const freshDerivedEntryRef = useRef(Boolean(entryIntentKey && !requestedSessionId));
   useEffect(() => {
     locationRef.current = location;
     navigateRef.current = navigate;
-    entryTitleRef.current = entryTitle;
-    derivedIntentRef.current = derivedIntent;
+    entryIntentKeyRef.current = entryIntentKey;
     freshDerivedEntryRef.current = Boolean(entryIntentKey && !requestedSessionId);
-  }, [location, navigate, entryTitle, derivedIntent, entryIntentKey, requestedSessionId]);
+  }, [location, navigate, entryIntentKey, requestedSessionId]);
 
   /**
    * Ref позволяет REST hydration всегда использовать актуальный язык,
@@ -115,8 +127,9 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
   }, []);
   // Guards against duplicate start_chat {} emits when user clicks "New Chat" multiple times
   // before the first chat_started arrives (Socket.IO buffers all emits when disconnected).
-  const pendingNewSessionRef = useRef(false);
+  const pendingNewSessionRef = useRef<PendingNewChat | null>(null);
   const pendingNewSessionSocketRef = useRef<Socket | null>(null);
+  const queuedManualNewChatRef = useRef(false);
 
   // Effect Event: socket handlers read the current language without reconnecting on switch.
   const reportConnectionLost = useEffectEvent(() => {
@@ -172,6 +185,10 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
       sessionStorage.removeItem(CONV_STATUS_KEY);
       sessionStorage.removeItem(CONV_OWNER_KEY);
     }
+    if (entryIntentKey && userId && loadEntrySession(userId, entryIntentKey) === id) {
+      removeEntrySession(userId, entryIntentKey);
+      startedEntryIntentRef.current = null;
+    }
     if (activeConvIdRef.current === id) {
       setActiveId(null);
       setIsTyping(false);
@@ -180,7 +197,7 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
     setSocketDialogues((previous) => previous.filter((dialogue) => dialogue.id !== id));
     if (requestedSessionId === id) removeSessionParam();
     void getQueryClient()?.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEYS.lists() });
-  }, [removeSessionParam, requestedSessionId, setActiveId]);
+  }, [entryIntentKey, removeSessionParam, requestedSessionId, setActiveId, userId]);
 
   // Merge REST list (base) with socket-updated dialogues (override by id).
   const dialogues = useMemo<Dialogue[]>(() => {
@@ -311,7 +328,7 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
 
   useEffect(() => {
     // Socket живёт только при authenticated: любой другой статус → сокета нет (cleanup отключает).
-    if (status !== 'authenticated') return;
+    if (status !== 'authenticated' || !userId) return;
 
     const currentUserId = userId;
     const prevUserId = prevUserIdRef.current;
@@ -324,7 +341,8 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
       setIsTyping(false);
       setPendingSearchConversationId(null);
       setConnectionError(null);
-      pendingNewSessionRef.current = false;
+      pendingNewSessionRef.current = null;
+      queuedManualNewChatRef.current = false;
       clearAuthScopedStorage();
     }
 
@@ -364,20 +382,23 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
     const onChatStarted = (payload: ChatStartedPayload) => {
       if (isStaleSocket()) return;
       // Capture before resetting: true = brand-new session, false = resume.
-      const wasNewSession = pendingNewSessionRef.current;
-      pendingNewSessionRef.current = false;
+      const pendingChat = pendingNewSessionRef.current;
+      const wasNewSession = Boolean(pendingChat);
+      pendingNewSessionRef.current = null;
       pendingNewSessionSocketRef.current = null;
       const { conversationId } = payload;
-      if (wasNewSession && entryStartPendingRef.current) {
-        setEntryConversationId(conversationId);
-        entryStartPendingRef.current = false;
-        if (userId && derivedIntentRef.current) {
-          saveDerivedIntent(userId, conversationId, derivedIntentRef.current);
+      if (pendingChat?.entryIntentKey && userId) {
+        saveEntrySession(userId, pendingChat.entryIntentKey, conversationId);
+        if (pendingChat.derivedIntent) saveDerivedIntent(userId, conversationId, pendingChat.derivedIntent);
+        if (entryIntentKeyRef.current === pendingChat.entryIntentKey) {
+          setEntryConversationId(conversationId);
+          const currentLocation = locationRef.current;
+          const params = new URLSearchParams(currentLocation.search);
+          params.set('session', conversationId);
+          navigateRef.current({ pathname: currentLocation.pathname, search: params.toString() }, { replace: true });
+        } else {
+          setEntryAttemptVersion((version) => version + 1);
         }
-        const currentLocation = locationRef.current;
-        const params = new URLSearchParams(currentLocation.search);
-        params.set('session', conversationId);
-        navigateRef.current({ pathname: currentLocation.pathname, search: params.toString() }, { replace: true });
       }
       emittedStartChatIds.add(conversationId);
       sessionStorage.setItem(CONV_SESSION_KEY, conversationId);
@@ -385,22 +406,22 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
       sessionStorage.setItem(CONV_STATUS_KEY, "active");
       setActiveId(conversationId);
       if (wasNewSession) {
-        void updateConversation(conversationId, { title: entryTitleRef.current || 'Новый бенчмарк' }).catch(() => undefined);
+        void updateConversation(conversationId, { title: pendingChat?.entryTitle || 'Новый бенчмарк' }).catch(() => undefined);
       }
       setSocketDialogues((prev) => {
         if (prev.find((d) => d.id === conversationId)) return prev;
         const now = new Date().toISOString();
         if (wasNewSession) {
           // New conversation starts with the default benchmark title.
-          saveConvName(conversationId, entryTitleRef.current || "Новый бенчмарк", entryTitleRef.current || "New Benchmark");
+          saveConvName(conversationId, pendingChat?.entryTitle || "Новый бенчмарк", pendingChat?.entryTitle || "New Benchmark");
           return [
             {
               id: conversationId,
               conversationId,
               conversationStatus: "active" as const,
               catalogSubmissionStatus: null,
-              benchmarkName: entryTitleRef.current || "Новый бенчмарк",
-              benchmarkNameEn: entryTitleRef.current || "New Benchmark",
+              benchmarkName: pendingChat?.entryTitle || "Новый бенчмарк",
+              benchmarkNameEn: pendingChat?.entryTitle || "New Benchmark",
               isArchived: false,
               startedAt: now,
               updatedAt: now,
@@ -432,6 +453,26 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
           },
         ];
       });
+      if (queuedManualNewChatRef.current && userId && status === 'authenticated') {
+        queuedManualNewChatRef.current = false;
+        restoreRequestRef.current++;
+        selectionRequestRef.current++;
+        emittedStartChatIds.clear();
+        pendingNewSessionRef.current = {};
+        pendingNewSessionSocketRef.current = socket;
+        setActiveId(null);
+        setIsTyping(false);
+        sessionStorage.removeItem(CONV_SESSION_KEY);
+        sessionStorage.removeItem(CONV_OWNER_KEY);
+        sessionStorage.removeItem(CONV_STATUS_KEY);
+        try {
+          socket.emit(WS_CLIENT_EVENTS.START_CHAT, {});
+        } catch {
+          pendingNewSessionRef.current = null;
+          pendingNewSessionSocketRef.current = null;
+          setConnectionError('Не удалось открыть чат. Повторите попытку.');
+        }
+      }
     };
 
     const onRecommendationRequestAccepted = (
@@ -741,7 +782,9 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
 
     const onError = (payload: WsErrorPayload) => {
       if (isStaleSocket()) return;
-      pendingNewSessionRef.current = false;
+      if (pendingNewSessionRef.current?.entryIntentKey) startedEntryIntentRef.current = null;
+      pendingNewSessionRef.current = null;
+      queuedManualNewChatRef.current = false;
       pendingNewSessionSocketRef.current = null;
       setIsTyping(false);
       setConnectionError(payload.message);
@@ -749,7 +792,9 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
 
     const onException = (payload: WsExceptionPayload) => {
       if (isStaleSocket()) return;
-      pendingNewSessionRef.current = false;
+      if (pendingNewSessionRef.current?.entryIntentKey) startedEntryIntentRef.current = null;
+      pendingNewSessionRef.current = null;
+      queuedManualNewChatRef.current = false;
       pendingNewSessionSocketRef.current = null;
       setIsTyping(false);
       setConnectionError(payload.message);
@@ -780,13 +825,17 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
       if (isStaleSocket()) return;
       if (activeConvIdRef.current) emittedStartChatIds.delete(activeConvIdRef.current);
       setIsTyping(false);
-      pendingNewSessionRef.current = false;
+      if (pendingNewSessionRef.current?.entryIntentKey) startedEntryIntentRef.current = null;
+      pendingNewSessionRef.current = null;
+      queuedManualNewChatRef.current = false;
       pendingNewSessionSocketRef.current = null;
       reportConnectionLost();
     });
     socket.on("connect_error", (err) => {
       if (isStaleSocket()) return;
-      pendingNewSessionRef.current = false;
+      if (pendingNewSessionRef.current?.entryIntentKey) startedEntryIntentRef.current = null;
+      pendingNewSessionRef.current = null;
+      queuedManualNewChatRef.current = false;
       pendingNewSessionSocketRef.current = null;
       setConnectionError(err.message);
     });
@@ -795,6 +844,12 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
 
     return () => {
       isActive = false;
+      if (pendingNewSessionSocketRef.current === socket) {
+        if (pendingNewSessionRef.current?.entryIntentKey) startedEntryIntentRef.current = null;
+        pendingNewSessionRef.current = null;
+        pendingNewSessionSocketRef.current = null;
+      }
+      queuedManualNewChatRef.current = false;
       if (activeConvIdRef.current) emittedStartChatIds.delete(activeConvIdRef.current);
       socket.removeAllListeners();
       socket.disconnect();
@@ -993,32 +1048,65 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
     [socketDialogues, conversationList, setActiveId, removeSessionParam, userId],
   );
 
-  const startNewSession = useCallback(() => {
-    if (pendingNewSessionRef.current) return;
+  const beginNewSession = useCallback((pendingChat: PendingNewChat) => {
+    if (status !== 'authenticated' || !userId || !socketRef.current || pendingNewSessionRef.current) return false;
+    const socket = socketRef.current;
     restoreRequestRef.current++;
     selectionRequestRef.current++;
-    pendingNewSessionRef.current = true;
-    pendingNewSessionSocketRef.current = socketRef.current;
+    pendingNewSessionRef.current = pendingChat;
+    pendingNewSessionSocketRef.current = socket;
     setActiveId(null);
     setIsTyping(false);
     emittedStartChatIds.clear();
     sessionStorage.removeItem(CONV_SESSION_KEY);
     sessionStorage.removeItem(CONV_OWNER_KEY);
     sessionStorage.removeItem(CONV_STATUS_KEY);
-    removeSessionParam();
-    socketRef.current?.emit(WS_CLIENT_EVENTS.START_CHAT, {});
-  }, [removeSessionParam, setActiveId]);
+    if (!pendingChat.entryIntentKey) removeSessionParam();
+    try {
+      socket.emit(WS_CLIENT_EVENTS.START_CHAT, {});
+      return true;
+    } catch {
+      if (pendingChat.entryIntentKey) startedEntryIntentRef.current = null;
+      pendingNewSessionRef.current = null;
+      pendingNewSessionSocketRef.current = null;
+      setConnectionError('Не удалось открыть чат. Повторите попытку.');
+      return false;
+    }
+  }, [removeSessionParam, setActiveId, status, userId]);
 
-  const startedEntryIntentRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!entryIntentKey || !entryReady || requestedSessionId || !userId || status !== 'authenticated') return;
+  const startNewSession = useCallback(() => {
+    if (status !== 'authenticated' || !userId) return;
+    if (pendingNewSessionRef.current?.entryIntentKey) {
+      queuedManualNewChatRef.current = true;
+      return;
+    }
+    beginNewSession({});
+  }, [beginNewSession, status, userId]);
+
+  const startEntrySession = useCallback(() => {
+    if (!entryIntentKey || requestedSessionId || !userId || status !== 'authenticated') return;
     const scopedKey = `${userId}:${entryIntentKey}`;
     if (startedEntryIntentRef.current === scopedKey) return;
-    startedEntryIntentRef.current = scopedKey;
-    entryStartPendingRef.current = true;
-    setEntryConversationId(null);
-    startNewSession();
-  }, [entryIntentKey, entryReady, requestedSessionId, status, startNewSession, userId]);
+    const existingId = loadEntrySession(userId, entryIntentKey);
+    if (existingId) {
+      startedEntryIntentRef.current = scopedKey;
+      const params = new URLSearchParams(location.search);
+      params.set('session', existingId);
+      navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
+      return;
+    }
+    if (!entryReady) return;
+    if (beginNewSession({ entryIntentKey, entryTitle, derivedIntent: derivedIntent ? { ...derivedIntent } : undefined })) {
+      startedEntryIntentRef.current = scopedKey;
+      setEntryConversationId(null);
+    }
+  }, [beginNewSession, derivedIntent, entryIntentKey, entryReady, entryTitle, location.pathname, location.search, navigate, requestedSessionId, status, userId]);
+
+  useEffect(() => {
+    // Entry creation is an intentional effect of entering this route with a ready source.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    startEntrySession();
+  }, [startEntrySession, entryAttemptVersion]);
 
   const renameDialogue = useCallback(async (id: string, name: string) => {
     const target = dialogues.find((dialogue) => dialogue.id === id);
@@ -1194,6 +1282,7 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
     connectionError,
     selectDialogue,
     startNewSession,
+    retryEntrySession: startEntrySession,
     startDerivedCreation,
     renameDialogue,
     toggleArchive,

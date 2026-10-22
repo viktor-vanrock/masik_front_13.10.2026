@@ -19,6 +19,8 @@ export {
   CONV_STATUS_KEY,
   CONV_OWNER_KEY,
   CONV_NAMES_KEY,
+  ENTRY_SESSION_PREFIX,
+  DERIVED_INTENT_PREFIX,
   clearAuthScopedStorage,
 } from './authStorage';
 

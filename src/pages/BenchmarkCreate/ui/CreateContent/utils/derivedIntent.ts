@@ -1,11 +1,40 @@
+import { DERIVED_INTENT_PREFIX, ENTRY_SESSION_PREFIX } from '@/services/auth';
+
 export type DerivedIntent = {
   mode: 'modify' | 'russify';
   baseId: string;
   baseType: 'suite' | 'test';
 };
 
+const entrySessionKey = (userId: string, entryIntentKey: string) =>
+  `${ENTRY_SESSION_PREFIX}${encodeURIComponent(userId)}:${encodeURIComponent(entryIntentKey)}`;
+
+export function saveEntrySession(userId: string, entryIntentKey: string, conversationId: string): void {
+  try {
+    sessionStorage.setItem(entrySessionKey(userId, entryIntentKey), conversationId);
+  } catch {
+    // The conversation remains available through its URL and the regular history.
+  }
+}
+
+export function loadEntrySession(userId: string, entryIntentKey: string): string | null {
+  try {
+    return sessionStorage.getItem(entrySessionKey(userId, entryIntentKey));
+  } catch {
+    return null;
+  }
+}
+
+export function removeEntrySession(userId: string, entryIntentKey: string): void {
+  try {
+    sessionStorage.removeItem(entrySessionKey(userId, entryIntentKey));
+  } catch {
+    // Storage may be unavailable in private browsing.
+  }
+}
+
 const storageKey = (userId: string, conversationId: string) =>
-  `benchmark-derived-intent:${userId}:${conversationId}`;
+  `${DERIVED_INTENT_PREFIX}${userId}:${conversationId}`;
 
 export function saveDerivedIntent(userId: string, conversationId: string, intent: DerivedIntent): void {
   try {

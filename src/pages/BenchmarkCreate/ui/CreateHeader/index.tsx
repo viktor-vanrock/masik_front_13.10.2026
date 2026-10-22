@@ -28,10 +28,15 @@ export const CreateHeader = ({
 
   useEffect(() => {
     if (!isRenameOpen) return;
-    requestAnimationFrame(() => {
+    // Keep the draft tied to opening the dialog, not later title updates.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNextName(dialogueName ?? '');
+    const frame = requestAnimationFrame(() => {
       renameInputRef.current?.focus();
       renameInputRef.current?.select();
     });
+    return () => cancelAnimationFrame(frame);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRenameOpen]);
 
   useEffect(() => {
@@ -65,7 +70,7 @@ export const CreateHeader = ({
           </h1>
           <button
             type="button"
-            onClick={() => { setNextName(dialogueName ?? ''); setIsRenameOpen(true); }}
+            onClick={() => setIsRenameOpen(true)}
             disabled={isTyping}
             className={iconBtnClass}
             aria-label={lang === 'ru' ? 'Изменить название' : 'Edit name'}

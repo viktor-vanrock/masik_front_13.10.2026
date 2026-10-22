@@ -7,7 +7,7 @@ import { deriveDisplayStatus } from '../../utils/deriveDisplayStatus';
 import { useApp } from '@/hooks/useApp';
 import { usePublishState } from './hooks/usePublishState';
 import { useConversation } from './hooks/useConversation';
-import { loadDerivedIntent, saveDerivedIntent } from './utils/derivedIntent';
+import { loadDerivedIntent } from './utils/derivedIntent';
 import { CreateHeader } from '../CreateHeader';
 import { MessageBubble } from '../MessageBubble';
 import { TypingIndicator } from '@components/ui';
@@ -135,6 +135,10 @@ export const CreateContent = () => {
   const entryTitle = derivedEntry && source
     ? source.name
     : undefined;
+  const entryDerivedIntent = useMemo(() =>
+    derivedEntry && (baseType === 'suite' || baseType === 'test') && derivedMode && baseId
+      ? { mode: derivedMode, baseId, baseType } : null,
+  [derivedEntry, baseType, derivedMode, baseId]);
 
   /**
    * Recommendation events contain canonical BenchmarkTest IDs from backend.
@@ -189,6 +193,7 @@ export const CreateContent = () => {
     isTyping,
     connectionError,
     startNewSession,
+    retryEntrySession,
     startDerivedCreation,
     renameDialogue,
     toggleArchive,
@@ -211,15 +216,12 @@ export const CreateContent = () => {
     startProduction,
     isStartingProduction,
     startProductionError,
-  } = useConversation(entryIntentKey, sourceReady, entryTitle,
-    derivedEntry && (baseType === 'suite' || baseType === 'test') && derivedMode && baseId
-      ? { mode: derivedMode, baseId, baseType } : null);
-
-  useEffect(() => {
-    if (derivedMode && baseId && (baseType === 'suite' || baseType === 'test') && entryConversationId && user?.id) {
-      saveDerivedIntent(user.id, entryConversationId, { mode: derivedMode, baseId, baseType });
-    }
-  }, [baseId, baseType, derivedMode, entryConversationId, user?.id]);
+  } = useConversation({
+    entryIntentKey,
+    entryReady: sourceReady,
+    entryTitle,
+    derivedIntent: entryDerivedIntent,
+  });
 
   const archivedDialogueIds = dialogues.filter((dialogue) => dialogue.isArchived).map((dialogue) => dialogue.id);
 
@@ -367,7 +369,7 @@ export const CreateContent = () => {
               {showSourceStatus && <section className="rounded-[18px] border border-[#e9edf2] bg-white p-5 text-[#1e1e20]">
                 {sourceLoading ? <p className="text-[13px] text-[#686e78]">Загружаем исходный бенчмарк…</p>
                   : sourceError || !source ? <div><p className="text-[13px] text-[#686e78]">Не удалось загрузить исходный бенчмарк.</p><button type="button" onClick={() => { if (isSuiteSource) { void refetchSuite(); void refetchTests(); } else { if (detectBaseType) void refetchSuite(); void refetchTest(); } }} className="mt-3 cursor-pointer rounded-[30px] bg-[#515dad1a] px-4 py-2 text-[12px] text-[#515dad]">Повторить</button></div>
-                    : <p className="text-[13px] text-[#686e78]">{connectionError ? 'Чат не открылся. Повторите подключение.' : 'Открываем новый чат…'}{connectionError && <button type="button" onClick={startNewSession} className="ml-2 cursor-pointer text-[#515dad] underline">Повторить</button>}</p>}
+                    : <p className="text-[13px] text-[#686e78]">{connectionError ? 'Чат не открылся. Повторите подключение.' : 'Открываем новый чат…'}{connectionError && <button type="button" onClick={derivedEntry ? retryEntrySession : startNewSession} className="ml-2 cursor-pointer text-[#515dad] underline">Повторить</button>}</p>}
               </section>}
               {derivedEntry && sourceReady && activeId === entryConversationId && (
                 <div className="w-full self-start rounded-[20px] bg-[#f3f6fa] px-7 py-6 text-[13px] leading-[1.8] text-[#1e1e20]">
