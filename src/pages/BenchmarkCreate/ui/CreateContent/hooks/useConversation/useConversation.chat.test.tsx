@@ -5,8 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { translations } from '@/i18n';
 import type { ConversationDetailDto } from '@/api/conversations/types';
 import { WS_CLIENT_EVENTS, WS_SERVER_EVENTS } from '@/services/socket';
-import { emittedStartChatIds, mapDetailToMessages } from '../utils/conversationUtils';
-import { loadDerivedIntent, loadEntrySession, type DerivedIntent } from '../utils/derivedIntent';
+import { emittedStartChatIds, mapDetailToMessages } from '../../utils/conversationUtils';
+import { loadDerivedIntent, loadEntrySession, type DerivedIntent } from '../../utils/derivedIntent';
 import { clearAuthScopedStorage } from '@/services/auth';
 import { useConversation } from './useConversation';
 
@@ -37,8 +37,8 @@ vi.mock('@/api/conversations', async (importOriginal) => ({
   getConversation: harness.getConversation,
 }));
 vi.mock('@/services/query', () => ({ getQueryClient: () => undefined }));
-vi.mock('./useGeneration', () => ({ useGeneration: () => ({}) }));
-vi.mock('./useProduction', () => ({ useProduction: () => ({}) }));
+vi.mock('../useGeneration', () => ({ useGeneration: () => ({}) }));
+vi.mock('../useProduction', () => ({ useProduction: () => ({}) }));
 
 function receive(event: string, payload?: unknown) {
   act(() => { harness.listeners.get(event)?.(payload); });

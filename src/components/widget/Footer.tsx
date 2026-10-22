@@ -6,6 +6,7 @@ import { NexTestLogo } from './Navbar';
 
 export function Footer() {
   const { t } = useApp();
+  const currentYear = new Date().getFullYear();
 
   return (
     <footer
@@ -18,7 +19,7 @@ export function Footer() {
             <NexTestLogo />
           </Link>
           <span className="text-center text-[11px] leading-[1.3] text-[#686e78]">
-            Среда создания бенчмарков и оценки моделей · 2026
+            Среда создания бенчмарков и оценки моделей · {currentYear}
           </span>
 
           <div className="flex items-center gap-6">

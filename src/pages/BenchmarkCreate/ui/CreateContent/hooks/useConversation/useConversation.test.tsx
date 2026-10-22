@@ -27,8 +27,8 @@ vi.mock('@/api/conversations', async (original) => ({
 vi.mock('@/services/socket', async (original) => ({
   ...await original<typeof import('@/services/socket')>(), createChatSocket: () => state.socket,
 }));
-vi.mock('./useGeneration', () => ({ useGeneration: () => ({ generation: state.generation }) }));
-vi.mock('./useProduction', () => ({ useProduction: () => ({ production: undefined }) }));
+vi.mock('../useGeneration', () => ({ useGeneration: () => ({ generation: state.generation }) }));
+vi.mock('../useProduction', () => ({ useProduction: () => ({ production: undefined }) }));
 const detail: ConversationDetailDto = {
   id: 'conversation', status: 'awaiting_choice', intent: 'find_existing', createdAt: '', updatedAt: '',
   messages: [], recommendations: [], recommendationRequests: [],

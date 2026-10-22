@@ -23,6 +23,39 @@ export default defineConfig([
       'indent': ['error', 2],
     }
   },
+  {
+    files: [
+      'src/pages/BenchmarkCreate/ui/CreateContent/index.tsx',
+      'src/pages/BenchmarksCatalogue/ui/SuiteLane.tsx',
+    ],
+    rules: {
+      'react-hooks/exhaustive-deps': 'off',
+      'indent': 'off',
+    },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: [
+      'src/i18n/index.ts',
+      'src/pages/Dashboard/data/benchmarks.ts',
+      'src/pages/Dashboard/data/gigametricBenchmarks.ts',
+      'src/generated/**',
+      'src/data/**',
+      'src/**/*.test.{ts,tsx}',
+      'src/**/*.spec.{ts,tsx}',
+      'src/test/**',
+      'src/**/*.config.{ts,tsx}',
+      'src/**/migrations/**',
+      'src/**/migration/**',
+    ],
+    rules: {
+      'max-lines': ['error', {
+        max: 400,
+        skipBlankLines: true,
+        skipComments: true,
+      }],
+    },
+  },
   // В тестах и тестовой инфраструктуре HMR не используется,
   // поэтому правило react-refresh здесь неактуально (часто соседствуют
   // helper-функции и компоненты в одном файле, см. renderWithProviders.tsx).

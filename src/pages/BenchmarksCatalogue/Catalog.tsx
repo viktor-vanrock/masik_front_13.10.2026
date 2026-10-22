@@ -1,9 +1,7 @@
-import { useEffect, useEffectEvent, useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useApp } from '@/hooks/useApp';
 
-import { useBenchmarkGroupsQuery, useBenchmarkQuery, useFilterOptionsQuery, useSuitesQuery, useSuiteQuery } from '@/api/catalog';
-import { deriveBenchmarkBadge } from './utils/deriveBenchmarkBadge';
+import { useBenchmarkGroupsQuery, useFilterOptionsQuery, useSuitesQuery, useSuiteQuery } from '@/api/catalog';
 import type { BenchmarkGroup, BenchmarkTestListQuery, BenchmarkType } from '@/types';
 import { useCatalogAnalyticsTracking } from '@/api/analytics';
 import { useDebouncedValue } from '@/utils/useDebouncedValue';
@@ -11,20 +9,13 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Bot, Download, Plus, Search, SlidersHorizontal, X,
 } from 'lucide-react';
+import type { CatalogFilterValues, CatalogGroup, CatalogItem } from './types';
+import { FilterDrawer } from './ui/FilterDrawer';
+import { SuiteLane } from './ui/SuiteLane';
+import { pluralRu } from './utils';
+import { RedesignedTestDetail } from './ui/RedesignedTestDetail';
+import { AppliedFilterChips } from './ui/AppliedFilterChips';
 
-type CatalogItem = {
-  id: string; name: string; subtitle: string; description: string; domain: string;
-  origin: string; difficulty: string; language: string; metric: string;
-  samples: number; status: string; tags: string[]; capabilities: string[];
-  validatedByUmr?: boolean; source?: string; authorId?: string;
-  validationStatus?: BenchmarkType['validationStatus'];
-  confidentiality?: string;
-  benchmark: BenchmarkType;
-};
-type CatalogGroup = {
-  suite: BenchmarkGroup['benchmark'];
-  tests: CatalogItem[];
-};
 function toCatalogItem(test: BenchmarkType, suiteName = ''): CatalogItem {
   return {
     id: test.id,
@@ -58,10 +49,8 @@ function matchesCatalogSearch(test: BenchmarkType, query: string) {
     .includes(normalizedQuery);
 }
 
-type CatalogFilterKey = 'suites' | 'language' | 'modality' | 'taskType' | 'difficulty' | 'capability' | 'domain' | 'subdomain' | 'macroGroup' | 'subGroup' | 'abilityTaxon' | 'abilityTag';
-type CatalogFilterValues = Record<CatalogFilterKey, string[]>;
+
 const emptyCatalogFilterValues = (): CatalogFilterValues => ({ suites: [], language: [], modality: [], taskType: [], difficulty: [], capability: [], domain: [], subdomain: [], macroGroup: [], subGroup: [], abilityTaxon: [], abilityTag: [] });
-type CatalogFilterOptions = { suites: string[]; language: string[]; modality: string[]; taskType: string[]; difficulty: string[]; capability: string[]; domain: string[]; subdomain: string[]; macroGroup: string[]; subGroup: string[]; abilityTaxon: string[]; abilityTag: string[]; domainChildren: Record<string, string[]>; macroChildren: Record<string, string[]> };
 export function Catalog() {
   const { lang, user } = useApp();
   const navigate = useNavigate();
@@ -229,212 +218,6 @@ export function Catalog() {
   );
 }
 
-function FilterDrawer({ onClose, onReset, onApply, resultCount, isCountPending, suiteSearch, onSuiteSearchChange, filterOptions, selected, onToggle }: { onClose: () => void; onReset: () => void; onApply: () => void; resultCount: number; isCountPending: boolean; suiteSearch: string; onSuiteSearchChange: (value: string) => void; filterOptions: CatalogFilterOptions; selected: CatalogFilterValues; onToggle: (key: CatalogFilterKey, value: string) => void }) {
-  const [listSearch, setListSearch] = useState<Record<string, string>>({});
-  const closeOnEscape = useEffectEvent(onClose);
-  const selectedCount = Object.values(selected).reduce((sum, values) => sum + values.length, 0);
-  useEffect(() => {
-    const scrollY = window.scrollY;
-    const body = document.body;
-    const root = document.documentElement;
-    const previousBodyStyles = {
-      position: body.style.position,
-      top: body.style.top,
-      left: body.style.left,
-      right: body.style.right,
-      width: body.style.width,
-      overflow: body.style.overflow,
-    };
-    const previousRootStyles = {
-      overflow: root.style.overflow,
-      overscrollBehavior: root.style.overscrollBehavior,
-    };
-    body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
-    body.style.left = '0';
-    body.style.right = '0';
-    body.style.width = '100%';
-    body.style.overflow = 'hidden';
-    root.style.overflow = 'hidden';
-    root.style.overscrollBehavior = 'none';
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeOnEscape();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      Object.assign(body.style, previousBodyStyles);
-      Object.assign(root.style, previousRootStyles);
-      window.scrollTo(0, scrollY);
-    };
-  }, []);
-  const searchable = (key: CatalogFilterKey, placeholder: string, value = listSearch[key] ?? '', onChange = (next: string) => setListSearch((current) => ({ ...current, [key]: next }))) => <label className="relative mb-2 block"><Search size={16} className="pointer-events-none absolute left-[13px] top-1/2 -translate-y-1/2 text-[#686e78]" /><input type="search" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} aria-label={placeholder} className="h-10 w-full rounded-[10px] border border-[#d1d7de] bg-white pl-[42px] pr-3 text-[12px] outline-none transition placeholder:text-[#8b929b] focus:border-[#515dad]" /></label>;
-  const optionList = (key: CatalogFilterKey, options: string[], query = listSearch[key] ?? '') => {
-    const q = query.trim().toLocaleLowerCase('ru');
-    const matched = options.filter((option) => !q || option.toLocaleLowerCase('ru').includes(q));
-    return <div className="grid max-h-[210px] gap-px overflow-auto rounded-[10px] border border-[#e9edf2] bg-white p-[5px]">{matched.length ? matched.map((option) => <label key={option} className={`flex cursor-pointer items-start gap-[9px] rounded-[7px] px-2 py-[7px] text-[11px] leading-[1.4] ${selected[key].includes(option) ? 'bg-[#eeeff7] text-[#3a427b]' : 'hover:bg-[#f7f8fb]'}`}><input type="checkbox" checked={selected[key].includes(option)} onChange={() => onToggle(key, option)} className="mt-[1px] h-[15px] w-[15px] accent-[#3a427b]" /><span>{option}</span></label>) : <div className="p-2.5 text-[11px] text-[#686e78]">Нет значений</div>}</div>;
-  };
-  const chips = (key: CatalogFilterKey, options: string[]) => <div className="flex flex-wrap gap-[7px]">{options.map((option) => <label key={option} className="relative cursor-pointer"><input type="checkbox" checked={selected[key].includes(option)} onChange={() => onToggle(key, option)} className="peer absolute h-px w-px opacity-0" /><span className="inline-flex min-h-8 items-center rounded-full border border-[#e9edf2] bg-white px-[10px] py-1.5 text-[11px] text-[#686e78] transition peer-checked:border-[#afb4d9] peer-checked:bg-[#eeeff7] peer-checked:font-medium peer-checked:text-[#3a427b]">{option}</span></label>)}</div>;
-  const filterField = (key: CatalogFilterKey, label: string, options: string[], searchableOptions = false) => <div className="mt-[18px]"><div className="mb-2 flex items-center justify-between gap-3 text-[12px] font-[550]"><span>{label}</span>{selected[key].length > 0 && <small className="text-[10px] font-normal text-[#686e78]">Выбрано: {selected[key].length}</small>}</div>{searchableOptions && searchable(key, 'Найти значение')}{searchableOptions ? optionList(key, options) : chips(key, options)}</div>;
-  const hierarchical = (parentKey: CatalogFilterKey, childKey: CatalogFilterKey, parentOptions: string[], childrenByParent: Record<string, string[]>, childLabel: string) => {
-    const q = (listSearch[parentKey] ?? '').trim().toLocaleLowerCase('ru');
-    const parents = parentOptions.filter((parent) => !q || parent.toLocaleLowerCase('ru').includes(q) || (childrenByParent[parent] ?? []).some((child) => child.toLocaleLowerCase('ru').includes(q)));
-    return <div><div className="mb-2 flex items-center justify-between gap-3 text-[12px] font-[550]"><span>{childLabel}</span>{selected[parentKey].length > 0 && <small className="text-[10px] font-normal text-[#686e78]">Выбрано: {selected[parentKey].length}</small>}</div>{searchable(parentKey, 'Найти раздел или подраздел')}<div className="grid max-h-[270px] gap-1.5 overflow-auto rounded-[10px] border border-[#e9edf2] p-[7px]">{parents.length ? parents.map((parent) => { const allChildren = childrenByParent[parent] ?? []; const parentMatches = !q || parent.toLocaleLowerCase('ru').includes(q); const childOptions = parentMatches ? allChildren : allChildren.filter((child) => child.toLocaleLowerCase('ru').includes(q)); return <details key={parent} open className="group/tree m-0 rounded-[8px] bg-white"><summary className="grid cursor-pointer list-none grid-cols-[auto_1fr_auto] items-start gap-2 rounded-[8px] p-2 text-[11px] hover:bg-[#f7f8fb] group-open/tree:bg-[#fafbfc] [&::-webkit-details-marker]:hidden"><span className="inline-block origin-center text-[14px] leading-[15px] text-[#686e78] transition-transform group-open/tree:rotate-90">›</span><label className={`flex cursor-pointer items-start gap-[9px] rounded-[7px] px-2 py-[7px] text-[11px] leading-[1.4] ${selected[parentKey].includes(parent) ? 'bg-[#eeeff7] text-[#3a427b]' : 'hover:bg-[#f7f8fb]'}`} onClick={(event) => event.stopPropagation()}><input type="checkbox" checked={selected[parentKey].includes(parent)} onChange={() => onToggle(parentKey, parent)} className="mt-[1px] h-[15px] w-[15px] accent-[#3a427b]" /><span>{parent}</span></label><small className="text-[12px]">{allChildren.length || ''}</small></summary>{childOptions.length > 0 && <div className="ml-7 mt-0.5 mb-1.5 grid gap-px border-l border-[#e9edf2] pl-[9px]">{childOptions.map((child) => <label key={child} className={`flex cursor-pointer items-start gap-[9px] rounded-[7px] px-2 py-1.5 text-[11px] leading-[1.4] ${selected[childKey].includes(child) ? 'bg-[#eeeff7] text-[#3a427b]' : 'hover:bg-[#f7f8fb]'}`}><input type="checkbox" checked={selected[childKey].includes(child)} onChange={() => onToggle(childKey, child)} className="mt-[1px] h-[15px] w-[15px] accent-[#3a427b]" /><span>{child}</span></label>)}</div>}</details>; }) : <div className="p-2.5 text-[11px] text-[#686e78]">Нет значений</div>}</div></div>;
-  };
-  return <div className="fixed inset-0 z-[79]" role="presentation">
-    <button type="button" aria-label="Закрыть фильтры" className="absolute inset-0 h-full w-full bg-[#17213a24] backdrop-blur-[1px]" onClick={onClose} />
-    <aside id="catalog-filter-drawer" aria-label="Фильтры каталога" aria-modal="true" role="dialog" className="absolute inset-y-0 right-0 z-[80] flex w-[min(560px,calc(100vw-32px))] flex-col border-l border-[#e9edf2] bg-white shadow-[-22px_0_70px_rgba(23,33,58,.122)] max-[760px]:w-screen">
-      <header className="flex items-start justify-between gap-5 border-b border-[#e9edf2] px-6 pb-[18px] pt-[22px] max-[760px]:px-[18px]">
-        <div><h2 className="text-[24px] font-medium tracking-[-.6px]">Фильтры</h2><p className="mt-1 text-[11px] text-[#686e78]">Поиск выполняется по отдельным тестам внутри наборов.</p></div>
-        <button type="button" aria-label="Закрыть" onClick={onClose} className="grid h-[38px] w-[38px] shrink-0 cursor-pointer place-items-center rounded-[10px] border border-[#e9edf2] bg-white text-[#686e78] transition hover:bg-[#f3f6fa]"><X size={18} /></button>
-      </header>
-      <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-7 pt-1 max-[760px]:px-[18px]">
-        <section className="border-b border-[#e9edf2] py-5"><h3 className="mb-[14px] text-[15px] font-medium">Основные</h3>
-          <div><div className="mb-2 flex items-center justify-between gap-3 text-[12px] font-[550]"><span>Набор</span>{selected.suites.length > 0 && <small className="text-[10px] font-normal text-[#686e78]">Выбрано: {selected.suites.length}</small>}</div>{searchable('suites', 'Найти значение', suiteSearch, onSuiteSearchChange)}{optionList('suites', filterOptions.suites, suiteSearch)}</div>
-          {filterField('language', 'Язык', filterOptions.language)}{filterField('modality', 'Модальность', filterOptions.modality)}{filterField('taskType', 'Тип задачи', filterOptions.taskType)}{filterField('difficulty', 'Сложность', filterOptions.difficulty)}{filterField('capability', 'Возможности', filterOptions.capability)}
-        </section>
-        <details open className="group/section border-b border-[#e9edf2]"><summary className="flex cursor-pointer list-none items-center justify-between py-5 text-[15px] font-medium [&::-webkit-details-marker]:hidden">Область и специализация<span aria-hidden="true" className="inline-block origin-center rotate-90 text-[20px] leading-none text-[#686e78] transition-transform group-open/section:-rotate-90">›</span></summary><div className="pb-5">{hierarchical('domain', 'subdomain', filterOptions.domain, filterOptions.domainChildren, 'Домен и поддомен')}</div></details>
-        <details className="group/section border-b border-[#e9edf2]"><summary className="flex cursor-pointer list-none items-center justify-between py-5 text-[15px] font-medium [&::-webkit-details-marker]:hidden">Классификация способностей<span aria-hidden="true" className="inline-block origin-center rotate-90 text-[20px] leading-none text-[#686e78] transition-transform group-open/section:-rotate-90">›</span></summary><div className="pb-5">{hierarchical('macroGroup', 'subGroup', filterOptions.macroGroup, filterOptions.macroChildren, 'Группы способностей')}{filterField('abilityTaxon', 'Конкретные способности', filterOptions.abilityTaxon, true)}<details className="mt-3 rounded-[10px] border border-[#e9edf2] px-3"><summary className="cursor-pointer py-3 text-[11px] text-[#3a427b]">Детальные теги способности</summary><div className="pb-3">{filterField('abilityTag', 'Теги', filterOptions.abilityTag, true)}</div></details></div></details>
-      </div>
-      <footer className="flex items-center justify-between gap-3 border-t border-[#e9edf2] bg-white px-6 py-4 max-[760px]:px-[18px]">
-        <button type="button" onClick={onReset} disabled={selectedCount === 0} className="inline-flex items-center justify-center gap-[10px] rounded-[30px] border border-transparent bg-[#9097a126] px-3 py-2 text-[12px] font-[450] leading-5 text-[#1e1e20] transition hover:bg-[#9097a140] disabled:cursor-not-allowed disabled:opacity-50">Сбросить</button>
-        <button type="button" onClick={onApply} disabled={isCountPending} className="inline-flex min-h-10 min-w-[190px] cursor-pointer items-center justify-center rounded-[30px] border border-transparent bg-[#515dad] px-4 text-[12px] font-medium text-white transition hover:bg-[#465195] disabled:cursor-wait disabled:opacity-70 max-[760px]:min-w-0 max-[760px]:flex-1">{isCountPending ? 'Показать…' : `Показать ${resultCount} ${pluralRu(resultCount, ['тест', 'теста', 'тестов'])}`}</button>
-      </footer>
-    </aside>
-  </div>;
-}
-
-const FILTER_LABELS: Record<CatalogFilterKey, string> = {
-  suites: 'Набор', language: 'Язык', modality: 'Модальность', taskType: 'Тип задачи',
-  difficulty: 'Сложность', capability: 'Возможности', domain: 'Домен', subdomain: 'Поддомен',
-  macroGroup: 'Группа способности', subGroup: 'Подгруппа способности',
-  abilityTaxon: 'Конкретная способность', abilityTag: 'Детальный тег',
-};
-
-function AppliedFilterChips({ filters, onRemove, onClear }: { filters: CatalogFilterValues; onRemove: (key: CatalogFilterKey, value: string) => void; onClear: () => void }) {
-  const chips = (Object.keys(FILTER_LABELS) as CatalogFilterKey[]).flatMap((key) => filters[key].map((value) => ({ key, value })));
-  if (!chips.length) return null;
-  return <div className="mb-5 mt-0 flex flex-wrap items-center gap-[7px]" aria-label="Применённые фильтры">
-    {chips.map(({ key, value }) => <button key={`${key}:${value}`} type="button" title="Убрать фильтр" onClick={() => onRemove(key, value)} className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[#d7dbe5] bg-white px-[9px] py-[5px] text-[11px] text-[#3a427b] transition hover:border-[#afb4d9] hover:bg-[#eeeff7]">
-      <span>{value}</span><X size={12} aria-hidden="true" />
-    </button>)}
-    <button type="button" onClick={onClear} className="cursor-pointer border-0 bg-transparent px-1.5 py-[5px] text-[11px] text-[#686e78] hover:text-[#3a427b]">Сбросить всё</button>
-  </div>;
-}
-
-function displayDictionaryName(value: { name: string; nameEn?: string } | null | undefined, lang: string) {
-  if (!value) return '';
-  return lang === 'en' ? value.nameEn || value.name : value.name;
-}
-
-function dictionaryNames(values: Array<{ name: string; nameEn?: string }> | null | undefined, lang: string) {
-  return [...new Set((values ?? []).map((value) => displayDictionaryName(value, lang)).filter(Boolean))];
-}
-
-function commonValues<T>(values: T[][]) {
-  if (!values.length) return [] as T[];
-  return values[0].filter((value) => values.every((list) => list.includes(value)));
-}
-
-function varyingField<T>(values: T[][]) {
-  const keys = values.map((value) => [...value].sort().join('|'));
-  return new Set(keys).size > 1;
-}
-
-function childDisplayName(suiteName: string, testName: string) {
-  const prefix = `${suiteName}:`;
-  return testName.startsWith(prefix) ? testName.slice(prefix.length).trim() : testName;
-}
-
-function suiteFacts(tests: CatalogItem[], lang: string) {
-  const benchmarks = tests.map((test) => test.benchmark);
-  const named = (get: (benchmark: BenchmarkType) => Array<{ name: string; nameEn?: string }>) => benchmarks.map((benchmark) => dictionaryNames(get(benchmark), lang));
-  const scalar = (get: (benchmark: BenchmarkType) => { name: string; nameEn?: string } | null | undefined) => {
-    const values = benchmarks.map((benchmark) => displayDictionaryName(get(benchmark), lang));
-    return values.length && values[0] && values.every((value) => value === values[0]) ? values[0] : '';
-  };
-  const languages = scalar((benchmark) => benchmark.language);
-  const domains = commonValues(named((benchmark) => benchmark.domains)).join(', ');
-  const modalityLists = named((benchmark) => benchmark.modalities);
-  const commonModality = modalityLists.length && modalityLists.every((value) => value.join('|') === modalityLists[0].join('|')) ? modalityLists[0].join(', ') : '';
-  const modality = commonModality || (modalityLists.flat().some((value) => !['text', 'текст'].includes(value.toLocaleLowerCase())) ? 'Мультимодальный' : '');
-  const accessValues = benchmarks.map((benchmark) => benchmark.confidentialityLevel || '');
-  const access = accessValues.length && accessValues[0] && accessValues.every((value) => value === accessValues[0]) ? accessValues[0] : accessValues.some(Boolean) ? 'Смешанный' : '';
-  const sizes = benchmarks.map((benchmark) => Number(benchmark.sizeInSamples) || 0);
-  const size = sizes.length && sizes[0] && sizes.every((value) => value === sizes[0]) ? sizes[0].toLocaleString('ru-RU') : '';
-  const metrics = benchmarks.map((benchmark) => benchmark.metrics.join(', '));
-  const commonMetric = metrics.length && metrics[0] && metrics.every((value) => value === metrics[0]) ? metrics[0] : '';
-  const taskType = scalar((benchmark) => benchmark.taskType);
-  const difficulty = scalar((benchmark) => benchmark.difficulty);
-  return [['Язык', languages], ['Модальность', modality], ['Доступ', access], ['Домен', domains], ['Размер', size], ['Метрика', commonMetric], ['Тип задачи', taskType], ['Сложность', difficulty]].filter(([, value]) => Boolean(value));
-}
-
-function taxonomyTags(test: BenchmarkType, tests: CatalogItem[], lang: string) {
-  const benchmarks = tests.map((item) => item.benchmark);
-  const distinct = (get: (benchmark: BenchmarkType) => string[]) => {
-    const current = get(test);
-    const common = new Set(commonValues(benchmarks.map(get)));
-    return current.filter((value) => !common.has(value));
-  };
-  const tags: Array<{ name: string; brand?: boolean }> = [];
-  const add = (values: string[], brand = false) => values.forEach((name) => { if (name && !tags.some((tag) => tag.name === name)) tags.push({ name, brand }); });
-  add(distinct((benchmark) => dictionaryNames(benchmark.domains, lang)), true);
-  add(distinct((benchmark) => dictionaryNames(benchmark.modalities, lang)));
-  const taxons = distinct((benchmark) => dictionaryNames(benchmark.abilityTaxons, lang));
-  const fallback = distinct((benchmark) => benchmark.abilityTags.length ? benchmark.abilityTags : dictionaryNames(benchmark.subGroups, lang));
-  add(taxons.length ? taxons : fallback);
-  const visible = tags.slice(0, 3);
-  if (tags.length > visible.length) visible.push({ name: `+${tags.length - visible.length}` });
-  return visible;
-}
-
-function TestResultCard({ test, suiteName, contextTests, lang, onOpen, onQuick }: { test: CatalogItem; suiteName: string; contextTests: CatalogItem[]; lang: string; onOpen: (item: CatalogItem) => void; onQuick: (item: CatalogItem) => void }) {
-  const benchmark = test.benchmark;
-  const title = childDisplayName(suiteName, displayDictionaryName(benchmark, lang));
-  const description = benchmark.shortDescription || benchmark.description || '';
-  const meta: Array<[string, string]> = [];
-  const vary = (get: (item: BenchmarkType) => string[]) => varyingField(contextTests.map((item) => get(item.benchmark)));
-  if (vary((item) => [String(Number(item.sizeInSamples) || 0)])) meta.push(['Размер', benchmark.sizeInSamples ? benchmark.sizeInSamples.toLocaleString('ru-RU') : '—']);
-  if (vary((item) => item.metrics)) meta.push(['Метрика', benchmark.metrics.join(', ') || '—']);
-  if (vary((item) => [displayDictionaryName(item.taskType, lang)])) meta.push(['Тип задачи', displayDictionaryName(benchmark.taskType, lang) || '—']);
-  if (vary((item) => [displayDictionaryName(item.difficulty, lang)])) meta.push(['Сложность', displayDictionaryName(benchmark.difficulty, lang) || '—']);
-  const tags = taxonomyTags(benchmark, contextTests, lang);
-  return <article className="relative flex min-h-[184px] flex-col overflow-hidden rounded-[13px] border border-[#e9edf2] bg-white transition hover:-translate-y-px hover:border-[#aab0d2] hover:shadow-[0_8px_24px_rgba(41,50,106,.05)]">
-    <a href={`/benchmark/${encodeURIComponent(test.id)}`} onClick={(event) => { event.preventDefault(); onOpen(test); }} aria-label={`Открыть тест: ${benchmark.name}`} className="relative z-[1] flex min-w-0 flex-1 flex-col p-4 pb-3 text-inherit no-underline focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#515dad] focus-visible:outline-offset-[-3px]">
-      <div className="mb-[9px] flex items-start justify-between gap-2.5"><h3 className="text-[14px] font-[550] leading-[1.42] tracking-[-.15px]">{title}</h3><svg aria-hidden="true" viewBox="0 0 18 18" className="mt-[3px] h-[13px] w-[13px] shrink-0 fill-none stroke-[#3a427b] stroke-[1.8] opacity-50 [stroke-linecap:round] [stroke-linejoin:round]"><path d="M4 9h10m-4-4 4 4-4 4" /></svg></div>
-      <p className="line-clamp-3 min-h-[4.65em] text-[11px] leading-[1.55] text-[#686e78]">{description}</p>
-      {tags.length > 0 && <div className="mt-2.5 flex flex-wrap gap-[5px]">{tags.map((tag) => <span key={tag.name} className={`rounded-md px-2 py-1 text-[9px] ${tag.brand ? 'bg-[#eeeff7] text-[#3a427b]' : 'bg-[#f3f6fa] text-[#686e78]'}`}>{tag.name}</span>)}</div>}
-      {meta.length > 0 && <div className="mt-auto flex flex-wrap items-start gap-x-[14px] pt-[13px] pr-[38px] pb-0.5">{meta.map(([label, value]) => <span key={label} className="min-w-0 text-[8px] leading-[1.35] text-[#686e78]">{label}<strong className="mt-0.5 block break-words text-[10px] font-medium text-[#1e1e20]">{value}</strong></span>)}</div>}
-    </a>
-    <button type="button" aria-label={`Быстрый просмотр: ${benchmark.name}`} title="Быстрый просмотр" onClick={() => onQuick(test)} className="absolute bottom-2.5 right-2.5 z-[3] grid h-[30px] w-[30px] cursor-pointer place-items-center rounded-[9px] border border-[#e9edf2] bg-white text-[#3a427b] shadow-[0_2px_8px_rgba(41,50,106,.04)] hover:border-[#aab0d2] hover:bg-[#eeeff7]"><svg aria-hidden="true" viewBox="0 0 18 18" className="h-[14px] w-[14px] fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"><path d="M1.5 9s2.8-4.5 7.5-4.5 7.5 4.5 7.5 4.5-2.8 4.5-7.5 4.5S1.5 9 1.5 9zm7.5 2.5A2.5 2.5 0 1 0 9 6.5a2.5 2.5 0 0 0 0 5z" /></svg></button>
-  </article>;
-}
-
-function SuiteLane({ group, contextTests, expanded, onToggle, onSuiteDetails, onDetails, onQuick, lang, userId, isFiltering }: { group: CatalogGroup; contextTests: CatalogItem[]; expanded: boolean; onToggle: () => void; onSuiteDetails: () => void; onDetails: (item: CatalogItem) => void; onQuick: (item: CatalogItem) => void; lang: string; userId?: string; isFiltering: boolean }) {
-  const { suite, tests } = group;
-  const visibleTests = expanded ? tests : tests.slice(0, 6);
-  const remaining = tests.length - visibleTests.length;
-  const facts = suiteFacts(contextTests, lang);
-  const suiteMetadata = suite as typeof suite & Pick<BenchmarkType, 'validatedByUmr' | 'authorId' | 'validationStatus' | 'source'> & { origin?: string; status?: string };
-  const isDraft = suiteMetadata.origin === 'user' || suiteMetadata.status === 'draft' || Boolean(userId && suiteMetadata.authorId === userId && suiteMetadata.validationStatus !== 'published');
-  const badge = suiteMetadata.validatedByUmr
-    ? deriveBenchmarkBadge(suiteMetadata, userId)
-    : isDraft ? { label: 'Черновик', tone: 'orange' as const } : null;
-  const suiteName = lang === 'en' ? suite.nameEn || suite.name : suite.name;
-  const suiteDescription = lang === 'en' ? suite.descriptionEn || suite.description : suite.description;
-  const totalTests = suite.benchmarkTestsCount || tests.length;
-  const countLabel = isFiltering ? `${tests.length} из ${totalTests} тестов` : `${totalTests} ${pluralRu(totalTests, ['тест', 'теста', 'тестов'])}`;
-  return <section className="min-w-0">
-    <header className="mb-0 grid grid-cols-1 items-end gap-3 border-b border-[#bfc4d2] px-0.5 pb-[13px] lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-5">
-      <div className="min-w-0"><div className="flex min-w-0 items-center gap-2.5"><h2 className="text-[20px] font-medium leading-[1.3] tracking-[-.35px] text-[#1e1e20]">{suiteName}</h2>{badge && <span className={`flex-none rounded-md px-2 py-1 text-[10px] ${badge.tone === 'green' ? 'bg-[#e5f4ee] text-[#0c7055]' : badge.tone === 'orange' ? 'bg-[#fff3df] text-[#996c25]' : 'bg-[#f3f6fa] text-[#686e78]'}`}>{badge.label}</span>}</div><p className="mt-[5px] line-clamp-2 max-w-[760px] text-[11px] leading-[1.55] text-[#686e78]">{suiteDescription}</p>{facts.length > 0 && <div className="mt-2 flex flex-wrap items-center gap-1.5">{facts.map(([label, value]) => <span key={label} className="inline-flex items-center gap-1 rounded-md bg-[#f3f5f8] px-[7px] py-[3px] text-[9px] leading-[1.4] text-[#686e78]">{label} <b className="font-medium text-[#1e1e20]">{value}</b></span>)}</div>}</div>
-      <div className="flex shrink-0 items-center gap-3.5 whitespace-nowrap max-[660px]:justify-between"><span className="text-[10px] text-[#686e78]">{countLabel}</span><button type="button" onClick={onSuiteDetails} className="inline-flex cursor-pointer items-center gap-1.5 text-[11px] font-medium text-[#3a427b]">Страница набора <svg aria-hidden="true" viewBox="0 0 18 18" className="h-[13px] w-[13px] fill-none stroke-current stroke-[1.8] [stroke-linecap:round] [stroke-linejoin:round]"><path d="M4 9h10m-4-4 4 4-4 4" /></svg></button></div>
-    </header>
-    {visibleTests.length > 0 ? <div className="grid gap-[10px] pt-3 min-[661px]:grid-cols-2 min-[981px]:grid-cols-3">{visibleTests.map((test) => <TestResultCard key={test.id} test={test} suiteName={suiteName} contextTests={contextTests} lang={lang} onOpen={onDetails} onQuick={onQuick} />)}</div> : <div className="rounded-xl border border-dashed border-[#d1d7de] p-[18px] text-[11px] text-[#686e78]">В наборе нет тестов, подходящих под текущие фильтры.</div>}
-    {tests.length > 6 && <div className="flex justify-center pt-3 max-[660px]:[&>button]:w-full"><button type="button" onClick={onToggle} aria-expanded={expanded} className="inline-flex min-h-9 min-w-[190px] cursor-pointer items-center justify-center rounded-[12px] border border-transparent bg-transparent px-3 py-2 text-[12px] text-[#1e1e20] transition hover:bg-[#f3f6fa]">{expanded ? 'Свернуть' : `Показать ещё ${remaining}`}</button></div>}
-  </section>;
-}
-
 function QuickPreview({ item, position, items, onClose, onSelect, onOpen }: { item: CatalogItem; position: number; items: CatalogItem[]; onClose: () => void; onSelect: (item: CatalogItem) => void; onOpen: () => void }) {
   const total = items.length;
   const test = item.benchmark;
@@ -582,70 +365,4 @@ function ExamplePreviewField({ value, separated = false }: { value: string; sepa
   const textClass = 'whitespace-pre-wrap break-words text-[11px] leading-[1.65] text-[#1e1e20]';
   if (!longValue) return <div className={spacing}><div className="rounded-[12px] border border-[#e9edf2] bg-white p-4"><p className={textClass}>{value}</p></div></div>;
   return <div className={spacing}><div className="rounded-[12px] border border-[#e9edf2] bg-white p-4"><div className="flex justify-end border-b border-[#e9edf2] pb-3"><button type="button" onClick={() => setExpanded((current) => !current)} aria-expanded={expanded} className="inline-flex cursor-pointer items-center gap-1 text-[11px] font-medium text-[#3a427b]"><span>{expanded ? 'Свернуть' : 'Развернуть'}</span><svg aria-hidden="true" viewBox="0 0 18 18" className={`h-[14px] w-[14px] fill-none stroke-current stroke-[1.8] transition-transform [stroke-linecap:round] [stroke-linejoin:round] ${expanded ? 'rotate-90' : ''}`}><path d="m7 4 5 5-5 5" /></svg></button></div><p className={`${expanded ? textClass : `${textClass} line-clamp-5`} mt-3`}>{value}</p></div></div>;
-}
-
-function RedesignedTestDetail() {
-  const { id } = useParams<{ id: string }>();
-  const { user } = useApp();
-  const navigate = useNavigate();
-  const { data: benchmark, isPending, isError, refetch } = useBenchmarkQuery({ id });
-  const { data: parentSuite } = useSuiteQuery({ id: benchmark?.suiteId });
-  const [activeTab, setActiveTab] = useState<'overview' | 'sources'>('overview');
-
-  if (isPending) return <main className="min-h-[calc(100vh-175px)] bg-white"><div className="mx-auto max-w-[1280px] px-5 py-12"><div className="h-10 w-2/3 animate-pulse rounded-lg bg-[#f3f6fa]" /><div className="mt-5 h-24 animate-pulse rounded-2xl bg-[#f3f6fa]" /></div></main>;
-  if (isError || !benchmark) return <main className="min-h-[calc(100vh-175px)] bg-white px-5 py-16 text-center text-[#1e1e20]"><p className="text-sm text-[#686e78]">Не удалось загрузить бенчмарк.</p><button type="button" onClick={() => void refetch()} className="mt-4 rounded-lg bg-[#515dad] px-4 py-2 text-sm text-white">Повторить</button></main>;
-
-  const badge = deriveBenchmarkBadge(benchmark, user?.id);
-  const badgeTone = badge?.tone === 'green' ? 'bg-[#e5f4ee] text-[#0c7055]' : badge?.tone === 'orange' ? 'bg-[#fef3e2] text-[#b45309]' : 'bg-[#f3f6fa] text-[#686e78]';
-  const displayedExamples = benchmark.examples;
-
-  return <main className="min-h-[calc(100vh-175px)] bg-white text-[#1e1e20]">
-    <div className="mx-auto max-w-[1280px] px-5 pb-12 pt-[34px] sm:px-8 lg:px-10 lg:pb-20">
-      <nav aria-label="Навигационная цепочка" className="mb-6 flex items-center gap-2.5 text-[12px] text-[#686e78]"><button type="button" onClick={() => navigate('/')} className="cursor-pointer text-[#3a427b]">Каталог</button><svg aria-hidden="true" viewBox="0 0 18 18" className="h-[14px] w-[14px] shrink-0 fill-none stroke-current stroke-[1.8] [stroke-linecap:round] [stroke-linejoin:round]"><path d="m7 4 5 5-5 5" /></svg>{parentSuite && <><button type="button" onClick={() => navigate(`/benchmark/${encodeURIComponent(parentSuite.id)}?type=suite`)} className="max-w-[260px] cursor-pointer truncate text-[#3a427b]">{parentSuite.name}</button><svg aria-hidden="true" viewBox="0 0 18 18" className="h-[14px] w-[14px] shrink-0 fill-none stroke-current stroke-[1.8] [stroke-linecap:round] [stroke-linejoin:round]"><path d="m7 4 5 5-5 5" /></svg></>}<span className="truncate">{benchmark.name}</span></nav>
-      <header className="mb-5 flex flex-col items-start justify-between gap-5 min-[981px]:flex-row min-[981px]:gap-8">
-        <div className="min-w-0 max-w-[690px]"><h1 className="mb-2 text-[40px] font-medium leading-[1.15] tracking-[-1.6px] max-sm:text-[32px]">{benchmark.name}</h1>{benchmark.nameEn !== benchmark.name && <p className="mb-2.5 text-[12px] text-[#686e78]">{benchmark.nameEn}</p>}{benchmark.shortDescription && benchmark.shortDescription !== benchmark.description && <p className="text-[13px] leading-[1.75] text-[#686e78]">{benchmark.shortDescription}</p>}<div className="mt-[18px] flex flex-wrap gap-2">{[benchmark.domains[0]?.name, benchmark.difficulty?.name, benchmark.language?.name, badge?.label].filter(Boolean).map((label, index) => <span key={`${label}-${index}`} className={`rounded-md px-2 py-1 text-[10px] ${index === 0 ? 'bg-[#eeeff7] text-[#3a427b]' : index === 3 ? badgeTone : 'bg-[#f3f6fa] text-[#686e78]'}`}>{label}</span>)}</div></div>
-        <div className="flex max-w-[520px] flex-wrap justify-start gap-2 min-[981px]:justify-end"><button type="button" onClick={() => { const url = URL.createObjectURL(new Blob([JSON.stringify(benchmark, null, 2)], { type: 'application/json' })); const link = document.createElement('a'); link.href = url; link.download = `benchmark-${benchmark.id}.json`; link.click(); URL.revokeObjectURL(url); }} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-[30px] border border-transparent bg-[#515dad1a] px-[13px] text-[13px] font-[450] leading-5 text-[#515dad] transition hover:bg-[#515dad26]"><Download size={18} />Скачать данные</button><button type="button" onClick={() => navigate(`/create?mode=modify&base=${encodeURIComponent(benchmark.id)}&baseType=test&new=${Date.now()}`)} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-[30px] border border-transparent bg-[#515dad1a] px-[13px] text-[13px] font-[450] leading-5 text-[#515dad] transition hover:bg-[#515dad26]">Улучшить<svg aria-hidden="true" viewBox="0 0 18 18" className="h-[18px] w-[18px] fill-none stroke-current stroke-[1.5] [stroke-linecap:round] [stroke-linejoin:round]"><path d="m9 1 2 6 6 2-6 2-2 6-2-6-6-2 6-2z" /></svg></button></div>
-      </header>
-      <div role="tablist" aria-label="Информация о бенчмарке" className="mb-5 flex gap-7 overflow-x-auto border-b border-[#e9edf2]">
-        {([['overview', 'Обзор'], ['sources', 'Источники']] as const).map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={activeTab === key} onClick={() => setActiveTab(key)} className={`min-h-11 whitespace-nowrap border-0 border-b-2 bg-transparent py-3.5 text-[13px] ${activeTab === key ? 'border-[#3a427b] text-[#3a427b]' : 'border-transparent text-[#686e78] hover:text-[#3a427b]'}`}>{label}</button>)}
-      </div>
-      <div className="grid items-start gap-6 min-[981px]:grid-cols-[minmax(0,1.62fr)_minmax(330px,1fr)]">
-        <section className="rounded-2xl border border-[#e9edf2] bg-white p-6">
-          {activeTab === 'overview' && <><section><p className="whitespace-pre-line text-[12px] leading-[1.8] text-[#686e78]">{benchmark.description}</p></section><section className="mt-[26px] border-t border-[#e9edf2] pt-6"><h3 className="mb-2.5 text-[16px] font-medium">Как проходит оценка</h3><p className="whitespace-pre-line text-[12px] leading-[1.8] text-[#686e78]">{benchmark.evaluationLogic || benchmark.instructions || '—'}</p></section><TestPassport benchmark={benchmark} /></>}
-          {activeTab === 'sources' && <section><h3 className="mb-2.5 text-[16px] font-medium">Публикации</h3>{benchmark.references.length ? <ul className="m-0 list-none p-0">{benchmark.references.map((reference, index) => <li key={`${benchmark.id}-reference-${index}`} className="border-b border-[#e9edf2] py-4"><a href={reference.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-[13px] text-[#3a427b] hover:underline">{reference.title || reference.url}<svg aria-hidden="true" viewBox="0 0 18 18" className="h-4 w-4 fill-none stroke-current stroke-[1.7] [stroke-linecap:round] [stroke-linejoin:round]"><path d="M10 2h6v6m0-6-9 9M7 3H2v13h13v-5" /></svg></a></li>)}</ul> : <p className="text-[12px] leading-[1.8] text-[#686e78]">Нет записей.</p>}<section className="mt-6"><h3 className="mb-2.5 text-[16px] font-medium">Ссылки</h3>{benchmark.links.length ? <ul className="m-0 list-none p-0">{benchmark.links.map((link, index) => <li key={`${benchmark.id}-link-${index}`} className="border-b border-[#e9edf2] py-4"><a href={link.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-[13px] text-[#3a427b] hover:underline">{link.title || link.url}{link.type && <span className="rounded-md bg-[#f3f6fa] px-2 py-1 text-[10px] text-[#686e78]">{link.type}</span>}<svg aria-hidden="true" viewBox="0 0 18 18" className="h-4 w-4 fill-none stroke-current stroke-[1.7] [stroke-linecap:round] [stroke-linejoin:round]"><path d="M10 2h6v6m0-6-9 9M7 3H2v13h13v-5" /></svg></a></li>)}</ul> : <p className="text-[12px] leading-[1.8] text-[#686e78]">Нет записей.</p>}</section><div className="h-4" />{benchmark.gigaMetricLaunchCommand && <section className="mt-[26px] border-t border-[#e9edf2] pt-6"><h3 className="mb-2.5 text-[16px] font-medium">Запуск оценки</h3><pre className="overflow-x-auto rounded-lg bg-[#f8f9fb] p-3 text-xs text-[#686e78]">{benchmark.gigaMetricLaunchCommand}</pre></section>}</section>}
-        </section>
-        <aside className="overflow-hidden rounded-2xl border border-[#e9edf2] bg-white lg:sticky lg:top-[104px]"><div className="flex items-center justify-between gap-3 border-b border-[#e9edf2] px-5 py-[18px]"><h2 className="text-[17px] font-medium tracking-[-.3px]">Примеры задач</h2>{displayedExamples.length > 0 && <span className="rounded-md bg-[#f3f6fa] px-2 py-1 text-[10px] text-[#686e78]">{displayedExamples.length}</span>}</div>{displayedExamples.length ? <div className="max-h-[calc(100vh-210px)] space-y-3 overflow-auto bg-[#f8fafc] p-4">{displayedExamples.map((example, index) => <article key={`${benchmark.id}-example-${index}`} className="rounded-[11px] border border-[#e9edf2] bg-white p-[15px]"><DetailExampleField value={example.input} />{example.output && <DetailExampleField value={example.output} label="Ответ" separated />}{example.explanation && <DetailExampleField value={example.explanation} label="Пояснение" separated />}</article>)}</div> : <div className="p-9 text-center text-[#686e78]"><strong className="mb-1.5 block text-[13px] font-medium text-[#1e1e20]">Примеры не приложены</strong><p className="text-[11px]">В ответе API нет примеров с данными.</p></div>}</aside>
-      </div>
-    </div>
-  </main>;
-}
-
-function DetailExampleField({ label, value, separated = false }: { label?: string; value: string; separated?: boolean }) {
-  const [expanded, setExpanded] = useState(false);
-  const longValue = value.length > 260 || value.split('\n').length > 7;
-  const containerClass = separated ? 'mt-[14px] border-t border-[#e9edf2] pt-[14px]' : '';
-  const textClass = 'whitespace-pre-wrap break-words text-[11px] leading-[1.65] text-[#1e1e20]';
-  if (!longValue) return <div className={containerClass}>{label && <span className="mb-1.5 block text-[9px] font-[550] uppercase tracking-[.05em] text-[#3a427b]">{label}</span>}<p className={textClass}>{value}</p></div>;
-  return <div className={containerClass}><div className={`flex items-center gap-3 ${label ? 'justify-between' : 'justify-end'}`}>{label && <span className="text-[9px] font-[550] uppercase tracking-[.05em] text-[#3a427b]">{label}</span>}<button type="button" onClick={() => setExpanded((current) => !current)} aria-expanded={expanded} className="inline-flex cursor-pointer items-center gap-1 text-[11px] font-medium text-[#3a427b]"><span>{expanded ? 'Свернуть' : 'Развернуть'}</span><svg aria-hidden="true" viewBox="0 0 18 18" className={`h-[14px] w-[14px] fill-none stroke-current stroke-[1.8] transition-transform [stroke-linecap:round] [stroke-linejoin:round] ${expanded ? 'rotate-90' : ''}`}><path d="m7 4 5 5-5 5" /></svg></button></div><p className={`${expanded ? textClass : `${textClass} line-clamp-5`} mt-1.5`}>{value}</p></div>;
-}
-
-const Tile = ({ label, value }: { label: string; value: string }) => <div className="min-w-0 rounded-[10px] border border-[#e9edf2] bg-[#fafbfc] px-3 py-[11px]"><span className="mb-[5px] block text-[9px] text-[#686e78]">{label}</span><strong className="block break-words text-[13px] font-[550]">{value}</strong></div>;
-const Chips = ({ values }: { values: string[] }) => values.length ? <div className="flex flex-wrap gap-1.5">{values.map((value) => <span key={value} className="rounded-full border border-[#e9edf2] bg-white px-[9px] py-1 text-[11px] font-[450] leading-[1.3] text-[#1e1e20]">{value}</span>)}</div> : null;
-const Row = ({ label, values, text }: { label: string; values?: string[]; text?: string }) => (!text && !values?.length) ? null : <div className="grid gap-2 min-[600px]:grid-cols-[154px_minmax(0,1fr)] min-[600px]:gap-[14px]"><span className="pt-[3px] text-[10px] text-[#686e78]">{label}</span>{text ? <p className="m-0 text-[12px] leading-[1.7] text-[#1e1e20]">{text}</p> : <Chips values={values ?? []} />}</div>;
-const Group = ({ title, children }: { title: string; children: ReactNode }) => <section className="grid gap-2.5"><h4 className="text-[10px] font-[550] uppercase tracking-[.06em] text-[#686e78]">{title}</h4>{children}</section>;
-const TreeRow = ({ label, root, children }: { label: string; root?: string; children: string[] }) => (!root && !children.length) ? null : <div className="grid gap-2 min-[600px]:grid-cols-[154px_minmax(0,1fr)] min-[600px]:gap-[14px]"><span className="pt-[3px] text-[10px] text-[#686e78]">{label}</span><div className="grid justify-items-start gap-1.5">{root && <span className="rounded-full border border-[#e9edf2] bg-[#f3f4f8] px-[9px] py-1 text-[11px] font-[550] leading-[1.3] text-[#1e1e20]">{root}</span>}{children.length > 0 && <div className="ml-4 grid w-full justify-items-start gap-1.5 border-l border-[#e9edf2] pl-3">{children.map((child, index) => <Chips key={`${child}-${index}`} values={[child]} />)}</div>}</div></div>;
-
-function TestPassport({ benchmark }: { benchmark: BenchmarkType }) {
-  const classification = [['Язык', benchmark.language?.name], ['Сложность', benchmark.difficulty?.name], ['Тип задачи', benchmark.taskType?.name]].filter((entry): entry is [string, string] => Boolean(entry[1]));
-  const access = [['Конфиденциальность', benchmark.confidentialityLevel], ['Уровень знаний', benchmark.knowledgeLevel], ['Важность', benchmark.importance], ['Статус', benchmark.validationStatus], ['Сгенерирован', benchmark.isGenerated ? 'Да' : 'Нет']].filter((entry): entry is [string, string] => Boolean(entry[1]));
-  return <section className="mt-[26px] border-t border-[#e9edf2] pt-6"><h3 className="mb-2.5 text-[16px] font-medium">Паспорт теста</h3><div className="mt-[14px] grid gap-[18px]"><Group title="Объём выборки"><div className="grid grid-cols-[repeat(auto-fit,minmax(132px,1fr))] gap-2"><Tile label="Размер выборки" value={benchmark.sizeInSamples.toLocaleString('ru-RU')} />{benchmark.medianSampleSizeWords > 0 && <Tile label="Медианная длина" value={`${benchmark.medianSampleSizeWords} слов`} />}</div></Group><Group title="Классификация">{classification.length > 0 && <div className="grid grid-cols-[repeat(auto-fit,minmax(132px,1fr))] gap-2">{classification.map(([label, value]) => <Tile key={label} label={label} value={value} />)}</div>}<Row label="Модальности" values={benchmark.modalities.map((item) => item.name)} /><Row label="Возможности" values={benchmark.capabilities.map((item) => item.name)} /></Group><Group title="Таксономия"><TreeRow label="Домен" root={benchmark.domains[0]?.name} children={[...benchmark.domains.slice(1).map((item) => item.name), ...benchmark.subdomains.map((item) => item.name)]} /><TreeRow label="Макро-группа" root={benchmark.macroGroup?.name} children={benchmark.subGroups.map((item) => item.name)} /><Row label="Таксоны способности" values={benchmark.abilityTaxons.map((item) => item.name)} /><Row label="Теги способности" values={benchmark.abilityTags} /><Row label="Навыки" values={benchmark.skills} /></Group><Group title="Оценка и метрики"><Row label="Метрики" values={benchmark.metrics} /><Row label="Рекомендуемые метрики" text={benchmark.recommendedMetricsDescription} /><Row label="Заметки о baseline" text={benchmark.humanBaselineNotes} /></Group><Group title="Статус и доступ">{access.length > 0 && <div className="grid grid-cols-[repeat(auto-fit,minmax(132px,1fr))] gap-2">{access.map(([label, value]) => <Tile key={label} label={label} value={value} />)}</div>}</Group></div></section>;
-}
-
-function pluralRu(value: number, forms: [string, string, string]): string {
-  const mod100 = value % 100;
-  const mod10 = value % 10;
-  if (mod100 >= 11 && mod100 <= 14) return forms[2];
-  if (mod10 === 1) return forms[0];
-  if (mod10 >= 2 && mod10 <= 4) return forms[1];
-  return forms[2];
 }

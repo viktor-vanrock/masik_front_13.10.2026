@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBenchmarkQuery, useBenchmarksQuery, useSuiteQuery } from '@/api/catalog';
-import type { BenchmarkType } from '@/types';
 import { DialoguePhase, DialogueStatus } from '@/types';
 import { deriveDisplayStatus } from '../../utils/deriveDisplayStatus';
 import { useApp } from '@/hooks/useApp';
 import { usePublishState } from './hooks/usePublishState';
-import { useConversation } from './hooks/useConversation';
+import { useConversation } from './hooks/useConversation/useConversation';
 import { loadDerivedIntent, type DerivedIntent } from './utils/derivedIntent';
 import { CreateHeader } from '../CreateHeader';
 import { MessageBubble } from '../MessageBubble';
@@ -16,94 +15,10 @@ import { MessageInput } from '../MessageInput';
 import { GenerationPanel } from '../GenerationPanel';
 import { Sidebar } from '../Sidebar';
 import { RestoreModal } from '@ui/RestoreModal';
-
-type DerivedMode = 'modify' | 'russify';
-type MockExample = { input: string; expectedOutput: string; accepted: boolean };
-type MockReadySet = { name: string; examples: Array<{ input: string; expectedOutput: string }>; sourceId: string | null };
-
-function readMockExamples(content: string): MockExample[] | null {
-  if (!content.startsWith('MOCK_GENERATED_EXAMPLES:')) return null;
-  try {
-    const rows: unknown = JSON.parse(content.slice('MOCK_GENERATED_EXAMPLES:'.length));
-    if (!Array.isArray(rows)) return null;
-    const examples = rows.filter((row): row is { input: string; expectedOutput: string } =>
-      typeof row === 'object' && row !== null && typeof row.input === 'string' && typeof row.expectedOutput === 'string',
-    );
-    return examples.length ? examples.map((row) => ({ ...row, accepted: true })) : null;
-  } catch {
-    return null;
-  }
-}
-
-function readMockReady(content: string): MockReadySet | null {
-  if (!content.startsWith('MOCK_SET_READY:')) return null;
-  try {
-    const value: unknown = JSON.parse(content.slice('MOCK_SET_READY:'.length));
-    if (!value || typeof value !== 'object') return null;
-    const ready = value as Partial<MockReadySet>;
-    if (typeof ready.name !== 'string' || !Array.isArray(ready.examples)) return null;
-    return { name: ready.name, examples: ready.examples.filter((row): row is { input: string; expectedOutput: string } =>
-      typeof row === 'object' && row !== null && typeof row.input === 'string' && typeof row.expectedOutput === 'string'), sourceId: typeof ready.sourceId === 'string' ? ready.sourceId : null };
-  } catch {
-    return null;
-  }
-}
-
-function buildDerivedRequest(mode: DerivedMode, source: { id: string; name: string; description?: string | null }, tests: BenchmarkType[], change: string) {
-  const examples = tests.flatMap((test) => test.examples.map((example) => ({ testName: test.name, example }))).slice(0, 3);
-  const lines = [
-    mode === 'russify'
-      ? `Подготовь требования к русскоязычной адаптации существующего бенчмарка «${source.name}». Переведи задания и эталонные ответы, сохрани измеряемый навык и адаптируй контекст.`
-      : `Подготовь требования к улучшенной версии существующего бенчмарка «${source.name}» на основе его данных.`,
-    'Сейчас только подготовь и покажи сводку требований. Не начинай генерацию до моего подтверждения. Если данных недостаточно, задай уточняющий вопрос.',
-    'Если требования готовы, ответь текстом с заголовком «Всё готово к подтверждению» и перечисли: способ создания, исходный набор, задачу, название, домен, язык, сложность, метрику, формат ответа и моё изменение. Значения, которых нет в исходных данных, пометь «Не указано». После сводки жди подтверждения или правок.',
-    `ID исходного бенчмарка: ${source.id}`,
-    source.description ? `Описание: ${source.description.slice(0, 1200)}` : '',
-    `Тестов в источнике: ${tests.length}.`,
-    `Доступных примеров: ${tests.reduce((count, test) => count + test.examples.length, 0)}; ниже приведены первые ${examples.length}.`,
-    `Что изменить: ${change}`,
-    ...tests.slice(0, 12).map((test) => [
-      `Тест: ${test.name} (ID: ${test.id}).`,
-      test.description ? `Описание теста: ${test.description.slice(0, 250)}` : '',
-      test.language?.name ? `Язык: ${test.language.name}.` : '',
-      test.domains.length ? `Домены: ${test.domains.map((domain) => domain.name).join(', ')}.` : '',
-      test.difficulty?.name ? `Сложность: ${test.difficulty.name}.` : '',
-      test.taskType?.name ? `Тип задачи: ${test.taskType.name}.` : '',
-      test.metrics.length ? `Метрики: ${test.metrics.join(', ')}.` : '',
-    ].filter(Boolean).join('\n')),
-    ...examples.map(({ testName, example }, index) =>
-      `Пример ${index + 1} из «${testName}»: ${example.input.slice(0, 700)}${example.output ? `\nЭталон: ${example.output.slice(0, 400)}` : ''}`,
-    ),
-  ];
-  return lines.filter(Boolean).join('\n\n');
-}
-
-function DemoGenerationLoader({ startedAt, producing = false }: { startedAt: number; producing?: boolean }) {
-  const [elapsed, setElapsed] = useState(0);
-
-  useEffect(() => {
-    const update = () => setElapsed(Math.floor((Date.now() - startedAt) / 1000));
-    update();
-    const interval = window.setInterval(update, 200);
-    return () => window.clearInterval(interval);
-  }, [startedAt]);
-
-  const stage = producing ? 'Собираем набор из выбранных примеров'
-    : elapsed < 1 ? 'Разбираем требования'
-      : elapsed < 2 ? 'Составляем задания' : 'Подготавливаем варианты для проверки';
-
-  return <section className="w-full max-w-[88%] rounded-[20px] bg-[#f3f6fa] px-[22px] py-[18px] text-[#1e1e20] max-[600px]:max-w-full" role="status" aria-live="polite">
-    <div className="py-2">
-      <h2 className="mb-[14px] text-[23px] font-medium leading-[1.4] max-[600px]:text-[20px]">{producing ? 'Масштабируем выбранные примеры' : 'Генерируем промежуточные варианты'}</h2>
-      <p className="text-[13px] leading-[1.6] text-[#686e78]">Можно перейти в личный кабинет. Статус и результат сохранятся в этом чате.</p>
-      <div className="my-[24px] mb-[14px] h-[6px] overflow-hidden rounded-[8px] bg-[#e9edf2]" role="progressbar" aria-label="Обработка заявки">
-        <span className="benchmark-demo-progress block h-full w-[30%] rounded-[8px] bg-[#515dad]" />
-      </div>
-      <div className="flex justify-between gap-5 text-[10px] tabular-nums text-[#686e78] max-[600px]:text-[12px]"><span>{stage}</span><span>Прошло <b className="font-normal">{elapsed} с</b></span></div>
-      <small className="mt-5 block text-[11px] text-[#3a427b] max-[600px]:text-[12px]">Следующий этап: {producing ? 'готовый набор в общем каталоге' : 'ваш выбор примеров'}</small>
-    </div>
-  </section>;
-}
+import { buildDerivedRequest } from './utils/buildDerivedRequest';
+import { DemoGenerationLoader } from '../DemoGenerationLoader';
+import type { DerivedMode, MockExample } from './types';
+import { readMockExamples, readMockReady } from './mock';
 
 export const CreateContent = () => {
   const { lang, t, user } = useApp();
@@ -134,18 +49,12 @@ export const CreateContent = () => {
   const sourceLoading = derivedEntry && (isSuiteSource ? isSuitePending || (Boolean(sourceSuite) && (isTestsPending || isTestsPlaceholder)) : isTestPending);
   const sourceError = derivedEntry && (isSuiteSource ? isSuiteError || isTestsError : isTestError);
   const sourceReady = !derivedEntry || Boolean(source && !sourceLoading && !sourceError);
-  const entryTitle = derivedEntry && source
-    ? source.name
-    : undefined;
+  const entryTitle = derivedEntry && source ? source.name: undefined;
   const entryDerivedIntent = useMemo<DerivedIntent | null>(() =>
     derivedEntry && resolvedBaseType && derivedMode && baseId
       ? { mode: derivedMode, baseId, baseType: resolvedBaseType } : null,
   [derivedEntry, resolvedBaseType, derivedMode, baseId]);
 
-  /**
-   * Recommendation events contain canonical BenchmarkTest IDs from backend.
-   * The legacy BenchmarksContext contains mock IDs and cannot hydrate them.
-   */
   const { data: benchmarksResponse } = useBenchmarksQuery({ limit: 1000 });
   const allBenchmarks = benchmarksResponse?.data ?? [];
 
@@ -188,36 +97,11 @@ export const CreateContent = () => {
   } = usePublishState();
 
   const {
-    dialogues,
-    activeId,
-    activeDialogue,
-    entryConversationId,
-    isTyping,
-    connectionError,
-    startNewSession,
-    retryEntrySession,
-    startDerivedCreation,
-    renameDialogue,
-    toggleArchive,
-    sendMessage,
-    acceptRecommendation,
-    rejectRecommendation,
-    generation,
-    generationError,
-    retryGeneration,
-    refreshGeneration,
-    isRetryingGeneration,
-    retryGenerationError,
-    cancelGeneration,
-    isCancellingGeneration,
-    cancelGenerationError,
-    production,
-    productionLoading,
-    productionError,
-    refreshProduction,
-    startProduction,
-    isStartingProduction,
-    startProductionError,
+    dialogues, activeId, activeDialogue, entryConversationId, isTyping, connectionError, startNewSession, retryEntrySession,
+    startDerivedCreation, renameDialogue, toggleArchive, sendMessage, acceptRecommendation, rejectRecommendation, generation,
+    generationError, retryGeneration, refreshGeneration, isRetryingGeneration, retryGenerationError, cancelGeneration,
+    isCancellingGeneration, cancelGenerationError, production, productionLoading, productionError, refreshProduction,
+    startProduction, isStartingProduction, startProductionError,
   } = useConversation({
     entryIntentKey,
     entryReady: sourceReady,
@@ -227,9 +111,7 @@ export const CreateContent = () => {
 
   const archivedDialogueIds = dialogues.filter((dialogue) => dialogue.isArchived).map((dialogue) => dialogue.id);
 
-  // resetPublish is stable (useCallback([])) — intentionally omitted from deps.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { resetPublish(); }, [activeId]);
+  useEffect(() => { resetPublish(); }, [activeId, resetPublish]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -262,7 +144,6 @@ export const CreateContent = () => {
 
   const doneMessage = t.create.recommendDone;
 
-  // Create phase disabled — isCreateDone always false until backend supports it.
   const isCreateDone = false;
   const showGeneration = activeDialogue?.conversationStatus === 'generating'
     || (!!generation && generation.status !== 'none');
