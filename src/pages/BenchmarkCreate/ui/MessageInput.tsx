@@ -6,6 +6,8 @@ import { useApp } from '@/hooks/useApp';
 interface Props {
   inputValue: string;
   isTyping: boolean;
+  disabled?: boolean;
+  placeholder?: string;
   status?: DialogueStatus;
   completionKind?: DialogueCompletionKind;
   doneMessage: string;
@@ -17,6 +19,8 @@ interface Props {
 export const MessageInput = ({
   inputValue,
   isTyping,
+  disabled = false,
+  placeholder,
   status,
   completionKind,
   doneMessage,
@@ -55,16 +59,16 @@ export const MessageInput = ({
             value={inputValue}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder={lang === 'ru' ? 'Сообщение...' : 'Message...'}
+            placeholder={placeholder ?? (lang === 'ru' ? 'Сообщение...' : 'Message...')}
             rows={2}
             className="w-full min-h-[44px] max-h-[44px] py-1.5 px-0 border-0 bg-transparent text-[13px] text-[#1e1e20] leading-[1.5] resize-none outline-none shadow-none focus-visible:outline-none focus-visible:shadow-none max-[600px]:text-base"
-            style={{ scrollbarWidth: 'thin', scrollbarColor: '#BFB8E5 transparent' }}
+            style={{ scrollbarWidth: 'auto', scrollbarColor: '#686e78 transparent' }}
           />
         </div>
         <button
           type="button"
           onClick={onSend}
-          disabled={!inputValue.trim() || isTyping}
+          disabled={!inputValue.trim() || isTyping || disabled}
           aria-label={t.create.send}
           className="grid w-[42px] h-[42px] flex-none place-items-center rounded-full bg-[#515dad] text-white cursor-pointer transition-colors duration-150 hover:bg-[#465195] disabled:bg-[#515dad] disabled:opacity-65"
         >

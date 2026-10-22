@@ -176,8 +176,9 @@ export function mapAgentPayloadToMessage(
 export function agentPayloadCompletesConversation(
   payload: AgentMessagePayload,
 ): boolean {
-  // Готовность ТЗ начинает Inventor: диалог завершится только после генерации.
-  if (payload.type === 'error' || payload.type === 'message') return false;
+  // isFinal marks the end of this agent response. A question still expects
+  // the user's answer and must keep the conversation active.
+  if (payload.type === 'error' || payload.type === 'message' || payload.type === 'question') return false;
   if (payload.type === 'result' && payload.content.status === 'generating') return false;
   return payload.type === 'result' || payload.isFinal;
 }

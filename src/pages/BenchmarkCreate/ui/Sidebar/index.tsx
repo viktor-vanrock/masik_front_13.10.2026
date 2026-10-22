@@ -69,7 +69,7 @@ export const Sidebar = ({
 
         <div className="flex min-h-0 flex-1 flex-col gap-4">
           <p className="flex-none px-2 text-xs leading-[1.5] text-[#686e78]">Чаты создания бенчмарков</p>
-          <div className="grid min-h-0 content-start gap-2 overflow-y-auto overscroll-contain pr-2 scrollbar-thin scrollbar-thumb-[#BFB8E5] scrollbar-track-transparent">
+          <div className="grid min-h-0 content-start gap-2 overflow-y-auto overscroll-contain pr-2 scrollbar-thin">
             {activeDialogues.map((dialogue) => (
               <DialogueListItem
                 key={dialogue.id}
@@ -89,7 +89,7 @@ export const Sidebar = ({
           {archiveOpen && (
             <div className="absolute z-10 inset-x-0 top-16 bottom-10 flex min-h-0 flex-col gap-2 overflow-hidden pt-2 px-1 bg-[#fcfcfd] origin-bottom animate-[archive-open_180ms_ease-out_both]">
               <p className="flex-none text-xs leading-[1.5] text-[#686e78]">Архивированные чаты</p>
-              <div className="grid min-h-0 content-start flex-1 gap-1 overflow-y-auto overscroll-contain pr-2 scrollbar-thin scrollbar-thumb-[#BFB8E5] scrollbar-track-transparent">
+              <div className="grid min-h-0 content-start flex-1 gap-1 overflow-y-auto overscroll-contain pr-2 scrollbar-thin">
                 {archivedDialogues.length ? archivedDialogues.map((dialogue) => (
                   <DialogueListItem
                     key={dialogue.id}

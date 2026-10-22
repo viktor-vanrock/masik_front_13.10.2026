@@ -18,8 +18,9 @@ export interface UseBenchmarkQueryOptions {
   enabled?: boolean;
 }
 
-export function useBenchmarksQuery(query: BenchmarkTestListQuery) {
+export function useBenchmarksQuery(query: BenchmarkTestListQuery, { enabled = true }: { enabled?: boolean } = {}) {
   return useQuery<BenchmarkTestListResponse>({
+    enabled,
     queryKey: CATALOG_QUERY_KEYS.list(query),
     queryFn: () => listBenchmarks(query),
     placeholderData: keepPreviousData,

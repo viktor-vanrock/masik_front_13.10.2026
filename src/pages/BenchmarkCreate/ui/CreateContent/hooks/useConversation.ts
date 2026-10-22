@@ -45,8 +45,9 @@ import {
   mergeConversationMessages,
   formatRecommendationExplanations,
 } from '../utils/conversationUtils';
+import { saveDerivedIntent, type DerivedIntent } from '../utils/derivedIntent';
 
-export function useConversation() {
+export function useConversation(entryIntentKey?: string, entryReady = true, entryTitle?: string, derivedIntent?: DerivedIntent | null) {
   const { t, status, user } = useApp();
   const userId = status === 'authenticated' ? user?.id ?? null : null;
   const location = useLocation();
@@ -60,6 +61,21 @@ export function useConversation() {
   const [isTyping, setIsTyping] = useState(false);
   const [pendingSearchConversationId, setPendingSearchConversationId] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [entryConversationId, setEntryConversationId] = useState<string | null>(entryIntentKey ? requestedSessionId : null);
+  useEffect(() => {
+    if (entryIntentKey && requestedSessionId) setEntryConversationId(requestedSessionId);
+  }, [entryIntentKey, requestedSessionId]);
+  const locationRef = useRef(location);
+  locationRef.current = location;
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+  const entryTitleRef = useRef(entryTitle);
+  entryTitleRef.current = entryTitle;
+  const derivedIntentRef = useRef(derivedIntent);
+  derivedIntentRef.current = derivedIntent;
+  const entryStartPendingRef = useRef(false);
+  const freshDerivedEntryRef = useRef(Boolean(entryIntentKey && !requestedSessionId));
+  freshDerivedEntryRef.current = Boolean(entryIntentKey && !requestedSessionId);
 
   /**
    * Ref позволяет REST hydration всегда использовать актуальный язык,
@@ -101,6 +117,7 @@ export function useConversation() {
   // Guards against duplicate start_chat {} emits when user clicks "New Chat" multiple times
   // before the first chat_started arrives (Socket.IO buffers all emits when disconnected).
   const pendingNewSessionRef = useRef(false);
+  const pendingNewSessionSocketRef = useRef<Socket | null>(null);
 
   // Effect Event: socket handlers read the current language without reconnecting on switch.
   const reportConnectionLost = useEffectEvent(() => {
@@ -188,6 +205,7 @@ export function useConversation() {
 
   useEffect(() => {
     if (!userId) return;
+    if (entryIntentKey && !requestedSessionId) return;
     const storedId = requestedSessionId ?? sessionStorage.getItem(CONV_SESSION_KEY);
     if (!storedId) return;
     const storedOwner = sessionStorage.getItem(CONV_OWNER_KEY);
@@ -206,6 +224,7 @@ export function useConversation() {
         sessionStorage.setItem(CONV_SESSION_KEY, storedId);
         sessionStorage.setItem(CONV_OWNER_KEY, userId);
         sessionStorage.setItem(CONV_STATUS_KEY, detail.status);
+        const switchedConversation = activeConvIdRef.current !== storedId;
         setActiveId(storedId);
         const messages = mapDetailToMessages(
           detail,
@@ -271,7 +290,7 @@ export function useConversation() {
           return [updated, ...prev];
         });
         // Resume only after REST has confirmed access to the session.
-        if (detail.status !== 'abandoned' && !emittedStartChatIds.has(storedId)) {
+        if (detail.status !== 'abandoned' && (switchedConversation || !emittedStartChatIds.has(storedId))) {
           emittedStartChatIds.add(storedId);
           socketRef.current?.emit(WS_CLIENT_EVENTS.START_CHAT, { conversationId: storedId });
         }
@@ -285,7 +304,7 @@ export function useConversation() {
     return () => {
       cancelled = true;
     };
-  }, [userId, requestedSessionId, forgetConversation, setActiveId]);
+  }, [userId, requestedSessionId, entryIntentKey, forgetConversation, setActiveId]);
 
   // ─── Socket setup (once on mount) ─────────────────────────────────────────
 
@@ -323,6 +342,12 @@ export function useConversation() {
     const onConnect = () => {
       if (isStaleSocket()) return;
       setConnectionError(null);
+      if (freshDerivedEntryRef.current && !pendingNewSessionRef.current) return;
+      if (pendingNewSessionRef.current && pendingNewSessionSocketRef.current !== socket) {
+        pendingNewSessionSocketRef.current = socket;
+        socket.emit(WS_CLIENT_EVENTS.START_CHAT, {});
+        return;
+      }
       const activeConversationId = activeConvIdRef.current;
       const activeStatus = sessionStorage.getItem(CONV_STATUS_KEY);
       if (
@@ -342,29 +367,41 @@ export function useConversation() {
       // Capture before resetting: true = brand-new session, false = resume.
       const wasNewSession = pendingNewSessionRef.current;
       pendingNewSessionRef.current = false;
+      pendingNewSessionSocketRef.current = null;
       const { conversationId } = payload;
+      if (wasNewSession && entryStartPendingRef.current) {
+        setEntryConversationId(conversationId);
+        entryStartPendingRef.current = false;
+        if (userId && derivedIntentRef.current) {
+          saveDerivedIntent(userId, conversationId, derivedIntentRef.current);
+        }
+        const currentLocation = locationRef.current;
+        const params = new URLSearchParams(currentLocation.search);
+        params.set('session', conversationId);
+        navigateRef.current({ pathname: currentLocation.pathname, search: params.toString() }, { replace: true });
+      }
       emittedStartChatIds.add(conversationId);
       sessionStorage.setItem(CONV_SESSION_KEY, conversationId);
       if (userId) sessionStorage.setItem(CONV_OWNER_KEY, userId);
       sessionStorage.setItem(CONV_STATUS_KEY, "active");
       setActiveId(conversationId);
       if (wasNewSession) {
-        void updateConversation(conversationId, { title: 'Новый бенчмарк' }).catch(() => undefined);
+        void updateConversation(conversationId, { title: entryTitleRef.current || 'Новый бенчмарк' }).catch(() => undefined);
       }
       setSocketDialogues((prev) => {
         if (prev.find((d) => d.id === conversationId)) return prev;
         const now = new Date().toISOString();
         if (wasNewSession) {
           // New conversation starts with the default benchmark title.
-          saveConvName(conversationId, "Новый бенчмарк", "New Benchmark");
+          saveConvName(conversationId, entryTitleRef.current || "Новый бенчмарк", entryTitleRef.current || "New Benchmark");
           return [
             {
               id: conversationId,
               conversationId,
               conversationStatus: "active" as const,
               catalogSubmissionStatus: null,
-              benchmarkName: "Новый бенчмарк",
-              benchmarkNameEn: "New Benchmark",
+              benchmarkName: entryTitleRef.current || "Новый бенчмарк",
+              benchmarkNameEn: entryTitleRef.current || "New Benchmark",
               isArchived: false,
               startedAt: now,
               updatedAt: now,
@@ -706,6 +743,7 @@ export function useConversation() {
     const onError = (payload: WsErrorPayload) => {
       if (isStaleSocket()) return;
       pendingNewSessionRef.current = false;
+      pendingNewSessionSocketRef.current = null;
       setIsTyping(false);
       setConnectionError(payload.message);
     };
@@ -713,6 +751,7 @@ export function useConversation() {
     const onException = (payload: WsExceptionPayload) => {
       if (isStaleSocket()) return;
       pendingNewSessionRef.current = false;
+      pendingNewSessionSocketRef.current = null;
       setIsTyping(false);
       setConnectionError(payload.message);
       if (payload.message?.toLowerCase().includes("unauthorized")) {
@@ -743,10 +782,13 @@ export function useConversation() {
       if (activeConvIdRef.current) emittedStartChatIds.delete(activeConvIdRef.current);
       setIsTyping(false);
       pendingNewSessionRef.current = false;
+      pendingNewSessionSocketRef.current = null;
       reportConnectionLost();
     });
     socket.on("connect_error", (err) => {
       if (isStaleSocket()) return;
+      pendingNewSessionRef.current = false;
+      pendingNewSessionSocketRef.current = null;
       setConnectionError(err.message);
     });
 
@@ -957,6 +999,7 @@ export function useConversation() {
     restoreRequestRef.current++;
     selectionRequestRef.current++;
     pendingNewSessionRef.current = true;
+    pendingNewSessionSocketRef.current = socketRef.current;
     setActiveId(null);
     setIsTyping(false);
     emittedStartChatIds.clear();
@@ -966,6 +1009,17 @@ export function useConversation() {
     removeSessionParam();
     socketRef.current?.emit(WS_CLIENT_EVENTS.START_CHAT, {});
   }, [removeSessionParam, setActiveId]);
+
+  const startedEntryIntentRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!entryIntentKey || !entryReady || requestedSessionId || !userId || status !== 'authenticated') return;
+    const scopedKey = `${userId}:${entryIntentKey}`;
+    if (startedEntryIntentRef.current === scopedKey) return;
+    startedEntryIntentRef.current = scopedKey;
+    entryStartPendingRef.current = true;
+    setEntryConversationId(null);
+    startNewSession();
+  }, [entryIntentKey, entryReady, requestedSessionId, status, startNewSession, userId]);
 
   const renameDialogue = useCallback(async (id: string, name: string) => {
     const target = dialogues.find((dialogue) => dialogue.id === id);
@@ -1109,6 +1163,25 @@ export function useConversation() {
     });
   }, [activeId, isTyping, dialogues]);
 
+  const startDerivedCreation = useCallback((initialMessage: string) => {
+    if (!activeId || isTyping || !initialMessage.trim()) return false;
+    const target = dialogues.find((dialogue) => dialogue.id === activeId);
+    if (!target?.conversationId || target.phase !== DialoguePhase.Recommend ||
+      target.conversationStatus === 'abandoned' || target.conversationStatus === 'generating') return false;
+
+    setIsTyping(true);
+    setSocketDialogues((previous) => previous.map((dialogue) =>
+      dialogue.id === activeId
+        ? { ...dialogue, messages: [...dialogue.messages, createUserMessage(initialMessage)] }
+        : dialogue,
+    ));
+    socketRef.current?.emit(WS_CLIENT_EVENTS.START_BENCHMARK_CREATION, {
+      conversationId: target.conversationId,
+      initialMessage,
+    });
+    return true;
+  }, [activeId, isTyping, dialogues]);
+
   return {
     ...generationState,
     ...productionState,
@@ -1117,10 +1190,12 @@ export function useConversation() {
       : dialogues,
     activeId,
     activeDialogue,
+    entryConversationId,
     isTyping: isTyping && activeDialogue?.conversationStatus !== 'abandoned',
     connectionError,
     selectDialogue,
     startNewSession,
+    startDerivedCreation,
     renameDialogue,
     toggleArchive,
     sendMessage,
