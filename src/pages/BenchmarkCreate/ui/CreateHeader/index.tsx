@@ -28,12 +28,10 @@ export const CreateHeader = ({
 
   useEffect(() => {
     if (!isRenameOpen) return;
-    setNextName(dialogueName ?? '');
     requestAnimationFrame(() => {
       renameInputRef.current?.focus();
       renameInputRef.current?.select();
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRenameOpen]);
 
   useEffect(() => {
@@ -67,7 +65,7 @@ export const CreateHeader = ({
           </h1>
           <button
             type="button"
-            onClick={() => setIsRenameOpen(true)}
+            onClick={() => { setNextName(dialogueName ?? ''); setIsRenameOpen(true); }}
             disabled={isTyping}
             className={iconBtnClass}
             aria-label={lang === 'ru' ? 'Изменить название' : 'Edit name'}

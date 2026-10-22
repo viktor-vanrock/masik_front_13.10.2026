@@ -62,20 +62,19 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
   const [pendingSearchConversationId, setPendingSearchConversationId] = useState<string | null>(null);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [entryConversationId, setEntryConversationId] = useState<string | null>(entryIntentKey ? requestedSessionId : null);
-  useEffect(() => {
-    if (entryIntentKey && requestedSessionId) setEntryConversationId(requestedSessionId);
-  }, [entryIntentKey, requestedSessionId]);
   const locationRef = useRef(location);
-  locationRef.current = location;
   const navigateRef = useRef(navigate);
-  navigateRef.current = navigate;
   const entryTitleRef = useRef(entryTitle);
-  entryTitleRef.current = entryTitle;
   const derivedIntentRef = useRef(derivedIntent);
-  derivedIntentRef.current = derivedIntent;
   const entryStartPendingRef = useRef(false);
   const freshDerivedEntryRef = useRef(Boolean(entryIntentKey && !requestedSessionId));
-  freshDerivedEntryRef.current = Boolean(entryIntentKey && !requestedSessionId);
+  useEffect(() => {
+    locationRef.current = location;
+    navigateRef.current = navigate;
+    entryTitleRef.current = entryTitle;
+    derivedIntentRef.current = derivedIntent;
+    freshDerivedEntryRef.current = Boolean(entryIntentKey && !requestedSessionId);
+  }, [location, navigate, entryTitle, derivedIntent, entryIntentKey, requestedSessionId]);
 
   /**
    * Ref позволяет REST hydration всегда использовать актуальный язык,
@@ -1190,7 +1189,7 @@ export function useConversation(entryIntentKey?: string, entryReady = true, entr
       : dialogues,
     activeId,
     activeDialogue,
-    entryConversationId,
+    entryConversationId: entryIntentKey && requestedSessionId ? requestedSessionId : entryConversationId,
     isTyping: isTyping && activeDialogue?.conversationStatus !== 'abandoned',
     connectionError,
     selectDialogue,

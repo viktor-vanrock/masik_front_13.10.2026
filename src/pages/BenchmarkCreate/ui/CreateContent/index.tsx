@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBenchmarkQuery, useBenchmarksQuery, useSuiteQuery } from '@/api/catalog';
 import type { BenchmarkType } from '@/types';
@@ -126,9 +126,9 @@ export const CreateContent = () => {
     { enabled: derivedEntry && isSuiteSource && Boolean(sourceSuite) },
   );
   const source = isSuiteSource ? sourceSuite : sourceTest;
-  const sourceTests = isSuiteSource
+  const sourceTests = useMemo(() => isSuiteSource
     ? sourceTestList?.data ?? []
-    : sourceTest ? [sourceTest] : [];
+    : sourceTest ? [sourceTest] : [], [isSuiteSource, sourceTestList?.data, sourceTest]);
   const sourceLoading = derivedEntry && (isSuiteSource ? isSuitePending || (Boolean(sourceSuite) && (isTestsPending || isTestsPlaceholder)) : isTestPending);
   const sourceError = derivedEntry && (isSuiteSource ? isSuiteError || isTestsError : isTestError);
   const sourceReady = !derivedEntry || Boolean(source && !sourceLoading && !sourceError);
