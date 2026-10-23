@@ -14,6 +14,8 @@ import {
 import type { BenchmarkType, MetricDefinition, MetricResult } from '@/types';
 import { useApp } from '@/hooks/useApp';
 import { useCssColors } from '@/hooks/useCssColors';
+import { metricResultsForMode } from '@/utils/resultModes';
+import type { SourceMode } from '@/types';
 
 const SCORE_COLORS = [
   '--add-blue-900',
@@ -46,20 +48,6 @@ function formatDate(iso?: string): string {
   return Number.isNaN(date.getTime()) ? iso : date.toLocaleDateString();
 }
 
-function latestResults(results: MetricResult[]): MetricResult[] {
-  const latest = new Map<string, MetricResult>();
-
-  for (const result of results) {
-    const key = `${result.metricId}:${result.modelId}`;
-    const current = latest.get(key);
-    if (!current || new Date(result.obtainedAt).getTime() > new Date(current.obtainedAt).getTime()) {
-      latest.set(key, result);
-    }
-  }
-
-  return [...latest.values()];
-}
-
 function chartDomain(metric: MetricDefinition | undefined, values: number[]): [number, number] {
   const observedMin = values.length > 0 ? Math.min(...values) : 0;
   const observedMax = values.length > 0 ? Math.max(...values) : 100;
@@ -73,10 +61,11 @@ export function ScoresTab({ benchmark, results, isPending, isError, error, onRet
   const scoreColors = useCssColors(SCORE_COLORS);
   const { t } = useApp();
   const [selectedMetricKey, setSelectedMetricKey] = useState('');
+  const [sourceMode] = useState<SourceMode>('benchmark');
 
   const currentResults = useMemo(
-    () => latestResults(results),
-    [results],
+    () => metricResultsForMode(results, sourceMode),
+    [results, sourceMode],
   );
 
   const metricOptions = useMemo<MetricOption[]>(() => {
@@ -146,6 +135,9 @@ export function ScoresTab({ benchmark, results, isPending, isError, error, onRet
   return (
     <div>
       <div className="flex items-center justify-between gap-4 mb-5 flex-wrap">
+        {/* <label>Режим результатов <select aria-label="Режим результатов" value={sourceMode} onChange={(event) => setSourceMode(event.target.value as SourceMode)}>
+          {SOURCE_MODES.map((mode) => <option key={mode} value={mode}>{mode}</option>)}
+        </select></label> */}
         <div>
           <h2 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
             {t.benchmark.scores}

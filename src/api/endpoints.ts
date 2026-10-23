@@ -64,6 +64,12 @@ export const BACKEND_PATHS = {
     testResults: (testId: string) =>
       `/metrics/tests/${encodeURIComponent(testId)}/results`,
   },
+  leaderboardBoards: {
+    create: '/leaderboard-boards',
+    list: '/leaderboard-boards/mine',
+    public: '/leaderboard-boards/public',
+    detail: (id: string) => `/leaderboard-boards/${encodeURIComponent(id)}`,
+  },
   settings: {
     aggregate: '/catalog/settings',
     list: (category: DictionaryCategory, type: DictionaryType) =>

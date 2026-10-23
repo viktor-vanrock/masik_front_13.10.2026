@@ -1,4 +1,5 @@
 import type { DictionaryRef } from './dictionary';
+import type { SourceMode } from './metrics';
 import type {
   BenchmarkLinkType,
   BenchmarkSortColumn,
@@ -11,7 +12,11 @@ export interface BenchmarkScore {
   metricId?: string;
   metricName?: string;
   score: number;
+  auqtc?: number;
+  tokensPerSec?: number;
   isOpenSource: boolean;
+  architecture?: string;
+  sourceMode?: SourceMode;
   isHumanBaseline: boolean;
   obtainedAt?: string;
 }

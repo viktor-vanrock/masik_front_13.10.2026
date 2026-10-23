@@ -19,6 +19,9 @@ import { AuthGuard } from "@/components/layout/AuthGuard";
 const Dashboard = lazy(() =>
   import("@/pages/Dashboard").then((m) => ({ default: m.Dashboard })),
 );
+const RunResult = lazy(() =>
+  import("@/pages/RunResult").then((m) => ({ default: m.RunResult })),
+);
 const CreateBenchmark = lazy(() =>
   import("@/pages/BenchmarkCreate").then((m) => ({ default: m.CreateBenchmark })),
 );
@@ -49,6 +52,8 @@ export const routes: RouteObject[] = [
       { path: ROUTES.GUIDE, element: <Guide /> },
       { path: ROUTES.BENCHMARK(":id"), element: <BenchmarkRoute /> },
       { path: ROUTES.DASHBOARD, element: withSuspense(<Dashboard />) },
+      { path: ROUTES.RUN_RESULT_SETUP, element: withSuspense(<RunResult />) },
+      { path: '/run-result/:modelId', element: withSuspense(<RunResult />) },
       { path: ROUTES.LOGIN, element: <Login /> },
       { path: ROUTES.REGISTER, element: <Register /> },
       { path: ROUTES.FORBIDDEN, element: <Forbidden /> },
