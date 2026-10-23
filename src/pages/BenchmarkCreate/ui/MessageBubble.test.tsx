@@ -23,8 +23,6 @@ describe('MessageBubble recommendations', () => {
         ],
       }}
       benchmarks={[]}
-      onQuickReply={vi.fn()}
-      quickReplyDisabled={false}
       onAcceptRecommendation={onAccept}
       onRejectRecommendation={onReject}
     /></MemoryRouter>);

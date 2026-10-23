@@ -6,13 +6,15 @@ import type { BenchmarkTestListQuery } from '@/types';
 
 export interface UseBenchmarkGroupsOptions {
   pageSize?: number;
+  enabled?: boolean;
 }
 
 export function useBenchmarkGroupsQuery(
   query: BenchmarkTestListQuery,
-  { pageSize = 30 }: UseBenchmarkGroupsOptions = {},
+  { pageSize = 30, enabled = true }: UseBenchmarkGroupsOptions = {},
 ) {
   return useInfiniteQuery({
+    enabled,
     queryKey: CATALOG_QUERY_KEYS.group(query),
     queryFn: ({ pageParam }) =>
       getBenchmarkGroups({ ...query, page: pageParam, limit: pageSize }),

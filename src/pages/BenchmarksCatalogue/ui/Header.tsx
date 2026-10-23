@@ -20,7 +20,7 @@ export const Header = () => {
       
       <div className="flex items-center gap-2 self-start sm:self-auto flex-shrink-0">
         <Link to={ROUTES.CREATE}>
-          <Button variant="outline" size='sm' style={{ borderRadius: '8px', cursor: 'pointer'}}>
+          <Button variant="unstyled" size='unstyled' style={{ borderRadius: '8px', cursor: 'pointer'}}>
             <MessageSquarePlus size={15} />
             {t.catalogue.recommendCta}
           </Button>
@@ -31,7 +31,7 @@ export const Header = () => {
               variant='secondary'
               className='text-white cursor-pointer '
               style={{ backgroundColor: 'var(--accent)', borderRadius: '8px'}}
-              size='sm'
+              size='unstyled'
             >
               <PlusCircle size={15} />
               {t.catalogue.createCta}

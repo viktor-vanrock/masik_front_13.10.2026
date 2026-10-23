@@ -28,11 +28,14 @@ export const CreateHeader = ({
 
   useEffect(() => {
     if (!isRenameOpen) return;
+    // Keep the draft tied to opening the dialog, not later title updates.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNextName(dialogueName ?? '');
-    requestAnimationFrame(() => {
+    const frame = requestAnimationFrame(() => {
       renameInputRef.current?.focus();
       renameInputRef.current?.select();
     });
+    return () => cancelAnimationFrame(frame);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRenameOpen]);
 

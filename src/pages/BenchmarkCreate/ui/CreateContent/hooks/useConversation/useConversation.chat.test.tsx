@@ -5,7 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { translations } from '@/i18n';
 import type { ConversationDetailDto } from '@/api/conversations/types';
 import { WS_CLIENT_EVENTS, WS_SERVER_EVENTS } from '@/services/socket';
-import { emittedStartChatIds, mapDetailToMessages } from '../utils/conversationUtils';
+import { emittedStartChatIds, mapDetailToMessages } from '../../utils/conversationUtils';
+import { loadDerivedIntent, loadEntrySession, type DerivedIntent } from '../../utils/derivedIntent';
+import { clearAuthScopedStorage } from '@/services/auth';
 import { useConversation } from './useConversation';
 
 const wrapper = ({ children }: { children: ReactNode }) => <MemoryRouter>{children}</MemoryRouter>;
@@ -13,10 +15,12 @@ const wrapper = ({ children }: { children: ReactNode }) => <MemoryRouter>{childr
 const harness = vi.hoisted(() => ({
   listeners: new Map<string, (payload?: unknown) => void>(),
   emit: vi.fn(), getConversation: vi.fn(),
+  authStatus: 'authenticated' as 'authenticated' | 'anonymous',
+  userId: 'user-1' as string | null,
 }));
 
 vi.mock('@/hooks/useApp', () => ({
-  useApp: () => ({ t: translations.ru, status: 'authenticated', user: { id: 'user-1' } }),
+  useApp: () => ({ t: translations.ru, status: harness.authStatus, user: harness.userId ? { id: harness.userId } : null }),
 }));
 vi.mock('@/services/socket', async (importOriginal) => ({
   ...await importOriginal<typeof import('@/services/socket')>(),
@@ -33,8 +37,8 @@ vi.mock('@/api/conversations', async (importOriginal) => ({
   getConversation: harness.getConversation,
 }));
 vi.mock('@/services/query', () => ({ getQueryClient: () => undefined }));
-vi.mock('./useGeneration', () => ({ useGeneration: () => ({}) }));
-vi.mock('./useProduction', () => ({ useProduction: () => ({}) }));
+vi.mock('../useGeneration', () => ({ useGeneration: () => ({}) }));
+vi.mock('../useProduction', () => ({ useProduction: () => ({}) }));
 
 function receive(event: string, payload?: unknown) {
   act(() => { harness.listeners.get(event)?.(payload); });
@@ -42,6 +46,7 @@ function receive(event: string, payload?: unknown) {
 
 function start() {
   const hook = renderHook(() => useConversation(), { wrapper });
+  expect(harness.listeners.has(WS_SERVER_EVENTS.CHAT_STARTED)).toBe(true);
   act(() => hook.result.current.startNewSession());
   receive(WS_SERVER_EVENTS.CHAT_STARTED, { conversationId: 'conversation-1' });
   return hook;
@@ -52,8 +57,98 @@ beforeEach(() => {
   harness.getConversation.mockReset();
   harness.listeners.clear();
   emittedStartChatIds.clear();
+  harness.authStatus = 'authenticated';
+  harness.userId = 'user-1';
+  sessionStorage.clear();
+  localStorage.clear();
 });
 afterEach(() => vi.useRealTimers());
+
+const firstIntent: DerivedIntent = { mode: 'modify', baseId: 'base-a', baseType: 'test' };
+const secondIntent: DerivedIntent = { mode: 'russify', baseId: 'base-b', baseType: 'suite' };
+const entryOptions = { entryIntentKey: 'modify:test:base-a:visit-1', entryReady: true, entryTitle: 'Исходный тест', derivedIntent: firstIntent };
+const newChatEmits = () => harness.emit.mock.calls.filter(([event, payload]) => event === WS_CLIENT_EVENTS.START_CHAT && !('conversationId' in (payload ?? {})));
+
+describe('entry and derived chat startup', () => {
+  it.each([
+    { status: 'anonymous' as const, userId: 'user-1' },
+    { status: 'authenticated' as const, userId: null },
+  ])('does not create a chat without confirmed user: $status / $userId', ({ status, userId }) => {
+    harness.authStatus = status;
+    harness.userId = userId;
+    const { result } = renderHook(() => useConversation(entryOptions), { wrapper });
+    act(() => result.current.startNewSession());
+    expect(newChatEmits()).toHaveLength(0);
+    expect(result.current.activeId).toBeNull();
+    expect(result.current.entryConversationId).toBeNull();
+  });
+
+  it('saves the intent captured when START_CHAT was sent, even if entry props change', () => {
+    const { rerender } = renderHook(({ intent }) => useConversation({ ...entryOptions, derivedIntent: intent }), {
+      wrapper, initialProps: { intent: firstIntent },
+    });
+    expect(harness.listeners.has(WS_SERVER_EVENTS.CHAT_STARTED)).toBe(true);
+    expect(newChatEmits()).toHaveLength(1);
+    rerender({ intent: secondIntent });
+    receive(WS_SERVER_EVENTS.CHAT_STARTED, { conversationId: 'entry-chat' });
+    expect(loadDerivedIntent('user-1', 'entry-chat')).toEqual(firstIntent);
+    expect(loadEntrySession('user-1', entryOptions.entryIntentKey)).toBe('entry-chat');
+  });
+
+  it('restores the same entry conversation on a second visit and clears its key at logout', () => {
+    const firstVisit = renderHook(() => useConversation(entryOptions), { wrapper });
+    receive(WS_SERVER_EVENTS.CHAT_STARTED, { conversationId: 'entry-chat' });
+    firstVisit.unmount();
+    harness.emit.mockClear();
+    const secondVisit = renderHook(() => useConversation(entryOptions), { wrapper });
+    expect(newChatEmits()).toHaveLength(0);
+    secondVisit.unmount();
+    clearAuthScopedStorage();
+    expect(loadEntrySession('user-1', entryOptions.entryIntentKey)).toBeNull();
+    expect(loadDerivedIntent('user-1', 'entry-chat')).toBeNull();
+  });
+
+  it('keeps a manual New Chat free of derived intent and clears pending after chat_started', () => {
+    const { result } = renderHook(() => useConversation(entryOptions), { wrapper });
+    receive(WS_SERVER_EVENTS.CHAT_STARTED, { conversationId: 'entry-chat' });
+    act(() => result.current.startNewSession());
+    expect(newChatEmits()).toHaveLength(2);
+    receive(WS_SERVER_EVENTS.CHAT_STARTED, { conversationId: 'manual-chat' });
+    expect(loadDerivedIntent('user-1', 'manual-chat')).toBeNull();
+    act(() => result.current.startNewSession());
+    expect(newChatEmits()).toHaveLength(3);
+  });
+
+  it('queues a manual New Chat clicked while the entry chat is still pending', () => {
+    const { result } = renderHook(() => useConversation(entryOptions), { wrapper });
+    act(() => result.current.startNewSession());
+    expect(newChatEmits()).toHaveLength(1);
+    receive(WS_SERVER_EVENTS.CHAT_STARTED, { conversationId: 'entry-chat' });
+    expect(newChatEmits()).toHaveLength(2);
+    receive(WS_SERVER_EVENTS.CHAT_STARTED, { conversationId: 'manual-chat' });
+    expect(loadDerivedIntent('user-1', 'entry-chat')).toEqual(firstIntent);
+    expect(loadDerivedIntent('user-1', 'manual-chat')).toBeNull();
+  });
+
+  it('clears pending intent on socket error and allows a clean entry retry', () => {
+    const { result } = renderHook(() => useConversation(entryOptions), { wrapper });
+    receive(WS_SERVER_EVENTS.ERROR, { message: 'Connection failed' });
+    act(() => result.current.retryEntrySession());
+    expect(newChatEmits()).toHaveLength(2);
+    receive(WS_SERVER_EVENTS.CHAT_STARTED, { conversationId: 'retry-chat' });
+    expect(loadDerivedIntent('user-1', 'retry-chat')).toEqual(firstIntent);
+  });
+
+  it('does not retain pending state when sending START_CHAT throws', () => {
+    harness.emit.mockImplementationOnce(() => { throw new Error('Socket unavailable'); });
+    const { result } = renderHook(() => useConversation(entryOptions), { wrapper });
+    expect(result.current.connectionError).toContain('Не удалось открыть чат');
+    act(() => result.current.retryEntrySession());
+    expect(newChatEmits()).toHaveLength(2);
+    receive(WS_SERVER_EVENTS.CHAT_STARTED, { conversationId: 'after-failure' });
+    expect(loadDerivedIntent('user-1', 'after-failure')).toEqual(firstIntent);
+  });
+});
 
 describe('unified interviewer chat', () => {
   it('sends an initial greeting to the agent without requesting search', async () => {

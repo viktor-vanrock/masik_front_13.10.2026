@@ -17,6 +17,10 @@ export function deriveDisplayStatus(
     return DisplayStatus.Ready;
   }
 
+  if (dialogue.messages.some((message) => message.role === 'assistant' && message.content.startsWith('MOCK_SET_READY:'))) {
+    return DisplayStatus.Ready;
+  }
+
   if (production?.status === 'queued' || production?.status === 'running') {
     return DisplayStatus.Producing;
   }

@@ -10,7 +10,7 @@ const navLinks = [
   { to: ROUTES.CREATE, label: 'Создать бенчмарк' },
 ] as const;
 
-function NexTestLogo() {
+export function NexTestLogo() {
   return (
     <svg className="block w-[140px] h-auto max-[520px]:w-[120px]" viewBox="0 0 592 144" fill="none" aria-hidden="true">
       <g fill="#202431">
@@ -63,12 +63,12 @@ export function Navbar() {
               {label}
             </Link>
           ))}
-          <button
+          {/* <button
             type="button"
             className="inline-flex h-full items-center border-0 p-0 bg-transparent text-[#686e78] text-sm whitespace-nowrap transition-colors duration-150 hover:text-[#515dad] font-[inherit] max-[1080px]:text-[13px]"
           >
             Оценить модель
-          </button>
+          </button> */}
         </nav>
 
         <div className="flex flex-none items-center gap-3">
@@ -99,12 +99,12 @@ export function Navbar() {
               {label}
             </Link>
           ))}
-          <button
+          {/* <button
             type="button"
             className="flex min-h-[44px] items-center rounded-lg px-3 border-0 bg-transparent text-[#686e78] text-sm text-left font-[inherit]"
           >
             Оценить модель
-          </button>
+          </button> */}
           <NavbarAuthSlotMobile onClose={() => setMobileOpen(false)} />
         </nav>
       )}

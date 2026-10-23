@@ -144,6 +144,21 @@ export interface BenchmarkType {
   validationStatus?: BenchmarkValidationStatus;
   /** Present on authenticated author and management reads only. */
   catalogEntry?: CatalogEntry;
+  /**
+   * Признак экспертной проверки УМР (управление модельным риском).
+   * Пока не возвращается бэкендом; зарезервировано для будущей интеграции.
+   */
+  validatedByUmr?: boolean;
+  /**
+   * Текстовая метка источника бенчмарка, например NexTest.
+   * Пока не возвращается бэкендом; зарезервировано для будущей интеграции.
+   */
+  source?: string;
+  /**
+   * ID автора бенчмарка. Пока не возвращается бэкендом; зарезервировано
+   * для будущего определения черновиков по текущему пользователю.
+   */
+  authorId?: string;
   isGenerated: boolean;
   jiraTicketId?: string;
   generatedAt?: string;
