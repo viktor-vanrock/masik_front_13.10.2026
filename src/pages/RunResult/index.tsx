@@ -53,7 +53,7 @@ export function RunResult() {
             <p>{run.updatedAt ? `Последнее обновление · ${new Date(run.updatedAt).toLocaleDateString('ru-RU')}` : 'Дата результата не указана'}</p>
           </div>
           <div className="run-result-actions">
-            <button type="button" className="run-result-button" onClick={downloadResult}><Download size={18} />Скачать JSON</button>
+            <button type="button" className="run-result-button" style={{ color: '#515dad' }} onClick={downloadResult}><Download size={18} />Скачать JSON</button>
             <button type="button" className="run-result-button primary" aria-disabled="true" tabIndex={-1}>Новый прогон<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 9h10m-4-4 4 4-4 4" /></svg></button>
           </div>
         </header>
