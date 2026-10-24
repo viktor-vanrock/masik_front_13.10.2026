@@ -11,8 +11,8 @@ const fixtures = vi.hoisted(() => {
   const model = { id: 'model', name: 'Diffusion Model', provider: null, architecture: 'text-diffusion', isOpenSource: false, createdAt: '', updatedAt: '' };
   const score = { modelId: model.id, modelName: model.name, metricId: 'accuracy', metricName: 'Accuracy', architecture: model.architecture, isOpenSource: false, isHumanBaseline: false };
   const test = { id: 'test', name: 'Test', nameEn: 'Test', sizeInSamples: 1, scores: [
-    { ...score, score: 90, sourceMode: 'benchmark', obtainedAt: '2026-10-23T00:00:00Z' },
-    { ...score, score: 30, sourceMode: 'harness', obtainedAt: '2026-10-22T00:00:00Z' },
+    { ...score, score: 90, auqtc: 0.9, sourceMode: 'benchmark', obtainedAt: '2026-10-23T00:00:00Z' },
+    { ...score, score: 30, auqtc: 0.3, sourceMode: 'harness', obtainedAt: '2026-10-22T00:00:00Z' },
     { ...score, modelId: 'benchmark-only', modelName: 'Benchmark Only', score: 80, sourceMode: 'benchmark', obtainedAt: '2026-10-23T00:00:00Z' },
   ] };
   const boards = [
@@ -57,18 +57,32 @@ describe('Rendered source mode views', () => {
     expect(screen.getByRole('table')).not.toHaveTextContent('Benchmark Only');
   });
 
-  it('renders RunResult independently for benchmark and harness', () => {
+  it('renders the harness result selected by the URL without a mode selector', () => {
     render(<MemoryRouter initialEntries={['/run-result/model?sourceMode=harness']}>
       <Routes><Route path="/run-result/:modelId" element={<RunResult />} /></Routes>
     </MemoryRouter>);
     const metrics = screen.getByRole('region', { name: 'Результаты прогона' });
     expect(metrics).toHaveTextContent('30.0%');
+    expect(metrics).toHaveTextContent('0.300');
     expect(metrics).not.toHaveTextContent('60.0%');
-    fireEvent.change(screen.getByRole('combobox', { name: 'Режим результатов' }), { target: { value: 'benchmark' } });
-    expect(metrics).toHaveTextContent('90.0%');
+    expect(screen.queryByRole('combobox', { name: 'Режим результатов' })).not.toBeInTheDocument();
   });
 
-  it('renders ScoresTab newest results per mode without discarding the older harness', () => {
+  it('renders benchmark results when no mode is specified', () => {
+    render(<MemoryRouter initialEntries={['/run-result/model']}>
+      <Routes><Route path="/run-result/:modelId" element={<RunResult />} /></Routes>
+    </MemoryRouter>);
+    expect(screen.getByRole('region', { name: 'Результаты прогона' })).toHaveTextContent('90.0%');
+  });
+
+  it('shows an empty efficiency value when AUQTC is absent', () => {
+    render(<MemoryRouter initialEntries={['/run-result/benchmark-only']}>
+      <Routes><Route path="/run-result/:modelId" element={<RunResult />} /></Routes>
+    </MemoryRouter>);
+    expect(screen.getByText('Эффективность').closest('article')).toHaveTextContent('—');
+  });
+
+  it('renders ScoresTab benchmark results with the mode selector hidden', () => {
     const results = fixtures.test.scores.filter((score) => score.modelId === 'model').map((score, i) => ({
       id: String(i), modelId: score.modelId, metricId: score.metricId, sourceMode: score.sourceMode,
       value: score.score, obtainedAt: score.obtainedAt, model: fixtures.model,
@@ -77,9 +91,8 @@ describe('Rendered source mode views', () => {
     render(<ScoresTab benchmark={{ ...fixtures.test, metrics: ['Accuracy'] } as BenchmarkType}
       results={results} isPending={false} isError={false} error={null} onRetry={vi.fn()} />);
     expect(within(screen.getByRole('table')).getByText('90.00')).toBeInTheDocument();
-    fireEvent.change(screen.getByRole('combobox', { name: 'Режим результатов' }), { target: { value: 'harness' } });
-    expect(within(screen.getByRole('table')).getByText('30.00')).toBeInTheDocument();
-    expect(within(screen.getByRole('table')).queryByText('90.00')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('table')).queryByText('30.00')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Режим результатов' })).not.toBeInTheDocument();
   });
 });
 

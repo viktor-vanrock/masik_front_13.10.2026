@@ -20,6 +20,14 @@ describe('Result source mode consumers', () => {
     expect(latestResults(scores).map((entry) => entry.score)).toEqual([90, 30]);
   });
 
+  it('does not let missing or invalid dates replace a dated result', () => {
+    const dated = score('benchmark', 90, '2026-10-23T00:00:00Z');
+    const invalid = score('benchmark', 10, 'not-a-date');
+    const missing = { ...score('benchmark', 20, ''), obtainedAt: undefined };
+    expect(latestResults([dated, invalid, missing])).toEqual([dated]);
+    expect(latestResults([invalid, dated])).toEqual([dated]);
+  });
+
   it.each([
     ['general', 'benchmark', 90], ['agent-systems', 'harness', 30],
     ['alternative-architectures', 'benchmark', 90],

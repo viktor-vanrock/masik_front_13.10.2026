@@ -61,7 +61,7 @@ export function ScoresTab({ benchmark, results, isPending, isError, error, onRet
   const scoreColors = useCssColors(SCORE_COLORS);
   const { t } = useApp();
   const [selectedMetricKey, setSelectedMetricKey] = useState('');
-  const [sourceMode] = useState<SourceMode>('benchmark');
+  const sourceMode: SourceMode = 'benchmark';
 
   const currentResults = useMemo(
     () => metricResultsForMode(results, sourceMode),
@@ -135,9 +135,6 @@ export function ScoresTab({ benchmark, results, isPending, isError, error, onRet
   return (
     <div>
       <div className="flex items-center justify-between gap-4 mb-5 flex-wrap">
-        {/* <label>Режим результатов <select aria-label="Режим результатов" value={sourceMode} onChange={(event) => setSourceMode(event.target.value as SourceMode)}>
-          {SOURCE_MODES.map((mode) => <option key={mode} value={mode}>{mode}</option>)}
-        </select></label> */}
         <div>
           <h2 className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
             {t.benchmark.scores}

@@ -47,7 +47,7 @@ export function Navbar() {
 
   const linkClass = (active: boolean) =>
     `relative inline-flex h-full items-center text-[15px] whitespace-nowrap transition-colors duration-150 max-[1080px]:text-sm ${
-      active ? 'text-[#3a427b]' : 'text-[#686e78] hover:text-[#515dad]'
+      active ? 'text-[#3a427b]' : 'text-[#686e78] hover:text-[#3a427b]'
     }`;
 
   return (

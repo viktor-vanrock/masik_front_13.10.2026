@@ -1,82 +1,93 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { ChevronRight, Download } from 'lucide-react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useBenchmarkGroupsQuery } from '@/api/catalog';
+import { useApp } from '@/hooks/useApp';
 import { ROUTES } from '@/routes/routes.constants';
 import { SOURCE_MODES, summarizeModelMode } from '@/utils/resultModes';
 import type { SourceMode } from '@/types';
 
 export function RunResult() {
   const navigate = useNavigate();
+  const { lang, t } = useApp();
+  const [downloadError, setDownloadError] = useState(false);
   const { modelId } = useParams<{ modelId: string }>();
   const [searchParams] = useSearchParams();
   const requestedMode = searchParams.get('sourceMode');
-  const sourceMode: SourceMode = SOURCE_MODES.includes(requestedMode as SourceMode) ? requestedMode as SourceMode : 'benchmark';
+  const invalidMode = requestedMode !== null && !SOURCE_MODES.includes(requestedMode as SourceMode);
+  const sourceMode: SourceMode = invalidMode || requestedMode === null ? 'benchmark' : requestedMode as SourceMode;
   const { data: groupsResponse, isPending, isError, error } = useBenchmarkGroupsQuery({}, { pageSize: 1000 });
   const runByMode = useMemo(() => {
     const tests = groupsResponse?.pages
       .flatMap((page) => page.data)
       .flatMap((group) => group.tests) ?? [];
     const modes = SOURCE_MODES.map((mode) => ({ mode, ...summarizeModelMode(tests, modelId ?? '', mode) }));
-    return { modes, selected: modes.find((result) => result.mode === sourceMode)! };
+    return { modes, selected: summarizeModelMode(tests, modelId ?? '', sourceMode) };
   }, [groupsResponse, modelId, sourceMode]);
-  const run = { ...runByMode.selected, modelName: runByMode.selected.modelName ?? runByMode.modes.find((result) => result.modelName)?.modelName };
+  const run = runByMode.selected;
   const metrics = [
-    ['Качество', run.score != null ? `${run.score.toFixed(1)}%` : '—', 'loglikelihood accuracy'],
-    ['Эффективность', run.auqtc != null ? run.auqtc.toFixed(3) : '—', 'AUQTC'],
-    ['Скорость', run.speed != null ? String(Math.round(run.speed)) : '—', 'токенов в секунду'],
-    ['Вычисления', '—', 'GPU·ч'],
+    [t.runResult.quality, run.score != null ? `${run.score.toFixed(1)}%` : '—', 'loglikelihood accuracy'],
+    [t.runResult.efficiency, typeof run.auqtc === 'number' && Number.isFinite(run.auqtc) ? run.auqtc.toFixed(3) : '—', 'AUQTC'],
+    [t.runResult.speed, run.speed != null ? String(Math.round(run.speed)) : '—', t.runResult.tokensPerSecond],
+    [t.runResult.compute, '—', t.runResult.gpuHours],
   ];
 
   const downloadResult = () => {
-    const result = JSON.stringify({ modelId, model: run.modelName, sourceMode, score: run.score, auqtc: run.auqtc, tokensPerSec: run.speed, resultsByMode: runByMode.modes }, null, 2);
-    const url = URL.createObjectURL(new Blob([result], { type: 'application/json' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'run-result.json';
-    link.click();
-    URL.revokeObjectURL(url);
+    try {
+      setDownloadError(false);
+      const result = JSON.stringify({ modelId, model: run.modelName, sourceMode, score: run.score, auqtc: run.auqtc, tokensPerSec: run.speed, resultsByMode: runByMode.modes }, null, 2);
+      const url = URL.createObjectURL(new Blob([result], { type: 'application/json' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'run-result.json';
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setDownloadError(true);
+    }
   };
 
-  if (isPending) return <div className="run-result-page"><div className="run-result-container run-result-status">Загрузка результата прогона…</div></div>;
-  if (isError) return <div className="run-result-page"><div className="run-result-container run-result-status">{error instanceof Error ? error.message : 'Не удалось загрузить результат прогона.'}</div></div>;
-  if (!modelId || !run.modelName) return <div className="run-result-page"><div className="run-result-container run-result-status"><h1>Результат не найден</h1><p>Откройте результат из строки модели в лидерборде.</p><button type="button" className="run-result-button primary" onClick={() => navigate(ROUTES.DASHBOARD)}>К лидербордам</button></div></div>;
+  if (isPending) return <div className="run-result-page"><div className="run-result-container run-result-status">{t.runResult.loading}</div></div>;
+  if (isError) return <div className="run-result-page"><div className="run-result-container run-result-status">{error instanceof Error ? error.message : t.runResult.loadError}</div></div>;
+  if (!modelId || !run.modelName) return <div className="run-result-page"><div className="run-result-container run-result-status"><h1>{t.runResult.notFound}</h1><p>{t.runResult.openFromBoard}</p><button type="button" className="run-result-button primary" onClick={() => navigate(ROUTES.DASHBOARD)}>{t.runResult.backToBoards}</button></div></div>;
 
   return (
     <div className="run-result-page">
       <div className="run-result-container">
-        <div className="run-result-breadcrumb"><button type="button" onClick={() => navigate(ROUTES.DASHBOARD)}>Лидерборды</button><ChevronRight size={16} />Результат прогона</div>
+        <div className="run-result-breadcrumb"><button type="button" onClick={() => navigate(ROUTES.DASHBOARD)}>{t.runResult.boards}</button><ChevronRight size={16} />{t.runResult.result}</div>
         <header className="run-result-heading">
           <div>
-            <div className="run-result-badges"><span className="run-result-badge">Результат оценки</span></div>
+            <div className="run-result-badges"><span className="run-result-badge">{t.runResult.assessmentResult}</span></div>
             <h1>{run.modelName}</h1>
-            <p>{run.updatedAt ? `Последнее обновление · ${new Date(run.updatedAt).toLocaleDateString('ru-RU')}` : 'Дата результата не указана'}</p>
+            <p>{run.updatedAt ? `${t.runResult.lastUpdated} · ${new Date(run.updatedAt).toLocaleDateString(lang === 'en' ? 'en-US' : 'ru-RU')}` : t.runResult.dateUnknown}</p>
           </div>
           <div className="run-result-actions">
-            <button type="button" className="run-result-button" style={{ color: '#515dad' }} onClick={downloadResult}><Download size={18} />Скачать JSON</button>
-            <button type="button" className="run-result-button primary" aria-disabled="true" tabIndex={-1}>Новый прогон<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 9h10m-4-4 4 4-4 4" /></svg></button>
+            <button type="button" className="run-result-button" style={{ color: '#515dad' }} onClick={downloadResult}><Download size={18} />{t.runResult.downloadJson}</button>
+            <button type="button" className="run-result-button primary" aria-disabled="true" tabIndex={-1}>{t.runResult.newRun}<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 9h10m-4-4 4 4-4 4" /></svg></button>
           </div>
         </header>
 
-        {/* <label>Режим результатов <select aria-label="Режим результатов" value={sourceMode} onChange={(event) => setSearchParams({ sourceMode: event.target.value })}>
-          {SOURCE_MODES.map((mode) => <option key={mode} value={mode}>{mode}</option>)}
-        </select></label> */}
-        <section className="run-result-metrics" aria-label="Результаты прогона">
+        {downloadError && <p role="alert">{t.runResult.downloadError}</p>}
+
+        {invalidMode && <p role="status">{t.runResult.invalidMode}</p>}
+        <section className="run-result-metrics" aria-label={t.runResult.resultsRegion}>
           {metrics.map(([label, value, hint]) => <article key={label}><small>{label}</small><strong>{value}</strong><em>{hint}</em></article>)}
         </section>
 
         <div className="run-result-grid">
           <section className="run-result-panel">
-            <h2>Контроль ограничений</h2>
+            <h2>{t.runResult.constraints}</h2>
             <p>—</p>
           </section>
           <section className="run-result-panel">
-            <h2>Конфигурация</h2>
+            <h2>{t.runResult.configuration}</h2>
             <dl>
-              <div><dt>Режим</dt><dd>{sourceMode}</dd></div>
-              <div><dt>Бюджет</dt><dd>—</dd></div>
-              <div><dt>Корзина</dt><dd>—</dd></div>
-              <div><dt>Наборы</dt><dd>—</dd></div>
+              <div><dt>{t.runResult.mode}</dt><dd>{sourceMode}</dd></div>
+              <div><dt>{t.runResult.budget}</dt><dd>—</dd></div>
+              <div><dt>{t.runResult.basket}</dt><dd>—</dd></div>
+              <div><dt>{t.runResult.datasets}</dt><dd>—</dd></div>
             </dl>
           </section>
         </div>

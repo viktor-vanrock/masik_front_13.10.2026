@@ -5,6 +5,12 @@ export const SOURCE_MODES: SourceMode[] = ['benchmark', 'stress', 'production', 
 // Older catalog fixtures omitted sourceMode; the storage default is benchmark.
 export const resultMode = (result: { sourceMode?: SourceMode }): SourceMode => result.sourceMode ?? 'benchmark';
 
+const resultTimestamp = (obtainedAt?: string): number => {
+  if (!obtainedAt) return Number.NEGATIVE_INFINITY;
+  const timestamp = Date.parse(obtainedAt);
+  return Number.isFinite(timestamp) ? timestamp : Number.NEGATIVE_INFINITY;
+};
+
 export function latestResults<T extends {
   modelId: string; metricId?: string; sourceMode?: SourceMode; obtainedAt?: string;
 }>(results: T[]): T[] {
@@ -12,7 +18,7 @@ export function latestResults<T extends {
   for (const result of results) {
     const key = JSON.stringify([result.modelId, result.metricId, resultMode(result)]);
     const current = latest.get(key);
-    if (!current || new Date(result.obtainedAt ?? 0).getTime() > new Date(current.obtainedAt ?? 0).getTime()) latest.set(key, result);
+    if (!current || resultTimestamp(result.obtainedAt) > resultTimestamp(current.obtainedAt)) latest.set(key, result);
   }
   return [...latest.values()];
 }
@@ -25,6 +31,7 @@ export function benchmarksForMode(benchmarks: BenchmarkType[], mode: SourceMode)
 
 export function boardSourceMode(systemKey?: string | null, selected: SourceMode = 'benchmark'): SourceMode {
   if (systemKey === 'general') return 'benchmark';
+  // Agent system boards use harness results by design.
   if (systemKey === 'agent-systems') return 'harness';
   return selected;
 }
