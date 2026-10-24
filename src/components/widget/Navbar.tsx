@@ -46,8 +46,8 @@ export function Navbar() {
       : location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   const linkClass = (active: boolean) =>
-    `relative inline-flex h-full items-center text-sm whitespace-nowrap transition-colors duration-150 max-[1080px]:text-[13px] ${
-      active ? 'text-[#515dad]' : 'text-[#686e78] hover:text-[#515dad]'
+    `relative inline-flex h-full items-center text-[15px] whitespace-nowrap transition-colors duration-150 max-[1080px]:text-sm ${
+      active ? 'text-[#3a427b]' : 'text-[#686e78] hover:text-[#3a427b]'
     }`;
 
   return (
@@ -92,8 +92,8 @@ export function Navbar() {
               key={to}
               to={to}
               onClick={() => setMobileOpen(false)}
-              className={`flex min-h-[44px] items-center rounded-lg px-3 text-sm no-underline font-[inherit] ${
-                isActive(to) ? 'bg-[#eeeff7] text-[#515dad]' : 'text-[#686e78]'
+              className={`flex min-h-[44px] items-center rounded-lg px-3 text-[15px] no-underline font-[inherit] ${
+                isActive(to) ? 'bg-[#eeeff7] text-[#3a427b]' : 'text-[#686e78]'
               }`}
             >
               {label}

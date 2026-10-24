@@ -1,3 +1,5 @@
+export type SourceMode = 'benchmark' | 'stress' | 'production' | 'comparison' | 'harness';
+
 export interface MetricLookup {
   id: string;
   code: string;
@@ -26,6 +28,7 @@ export interface MetricModel {
   name: string;
   provider: string | null;
   isOpenSource: boolean;
+  architecture: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -43,6 +46,7 @@ export interface MetricResult {
   rawModelName: string | null;
   rawMetricName: string | null;
   metadata: Record<string, unknown>;
+  sourceMode: SourceMode;
   createdAt: string;
   updatedAt: string;
   metric: MetricDefinition;
@@ -76,5 +80,6 @@ export interface CreateMetricResultDto {
   obtainedAt?: string;
   importSource?: string;
   metadata?: Record<string, unknown>;
+  sourceMode?: SourceMode;
 }
 import type { SortDirection } from './catalog.enums';

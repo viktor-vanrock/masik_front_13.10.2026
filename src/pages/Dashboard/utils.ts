@@ -1,4 +1,6 @@
 import type { BenchmarkType } from '@/types';
+import { resultMode } from '@/utils/resultModes';
+import type { SourceMode } from '@/types';
 import type { DashboardSuite } from '@/pages/Dashboard/data/types';
 
 /**
@@ -37,7 +39,8 @@ export function allSuiteMembersSelected(
 export function benchmarkModelScore(
   benchmark: BenchmarkType,
   modelId: string,
-  metricId: string | null
+  metricId: string | null,
+  sourceMode: SourceMode = 'benchmark'
 ): number | null {
   if (!metricId) return null;
 
@@ -45,6 +48,7 @@ export function benchmarkModelScore(
     (score) =>
       score.modelId === modelId &&
       score.metricId === metricId &&
+      resultMode(score) === sourceMode &&
       !score.isHumanBaseline
   );
 
@@ -59,7 +63,8 @@ export function aggregateSuiteModelScore(
   bmMap: Map<string, BenchmarkType>,
   selectedBenchmarks: Set<string>,
   modelId: string,
-  metricId: string | null
+  metricId: string | null,
+  sourceMode: SourceMode = 'benchmark'
 ): number | null {
   const selectedSuiteBms = suite.testIds.filter(id =>
     selectedBenchmarks.has(id)
@@ -73,7 +78,7 @@ export function aggregateSuiteModelScore(
     const benchmark = bmMap.get(bmId);
     if (!benchmark) continue;
     
-    const score = benchmarkModelScore(benchmark, modelId, metricId);
+    const score = benchmarkModelScore(benchmark, modelId, metricId, sourceMode);
 
     if (score != null) {
       scores.push(score);

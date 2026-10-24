@@ -34,6 +34,7 @@ export type visibleModelsType = {
     name: string;
     isOpenSource: boolean;
     provider: string | null;
+    architecture?: string | null;
 }
 
 export type DashboardMetricOption = {

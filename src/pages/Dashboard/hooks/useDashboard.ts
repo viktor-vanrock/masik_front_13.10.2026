@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
-import type { BenchmarkType, MetricModel } from '@/types';
+import { benchmarksForMode } from '@/utils/resultModes';
+import type { BenchmarkType, MetricModel, SourceMode } from '@/types';
 import type {
   BarBreakdownRowsType,
   ColSort,
@@ -20,10 +21,12 @@ import type { DashboardSuite } from "@/pages/Dashboard/data/types";
 
 export function useDashboard(
   lang: string,
-  benchmarks: BenchmarkType[],
+  allBenchmarks: BenchmarkType[],
   benchmarkSuites: DashboardSuite[],
   models: MetricModel[],
+  sourceMode: SourceMode = 'benchmark',
 ) {
+  const benchmarks = useMemo(() => benchmarksForMode(allBenchmarks, sourceMode), [allBenchmarks, sourceMode]);
   // State
   // `null` means "all entities returned by the API". Once the user changes a
   // filter we persist an explicit set, while refetches still prune stale ids.
@@ -88,11 +91,11 @@ export function useDashboard(
       if (!selectedBenchmarks.has(b.id)) return;
       matrix[b.id] = {};
       visibleModels.forEach((m) => {
-        matrix[b.id][m.id] = benchmarkModelScore(b, m.id, activeMetricId);
+        matrix[b.id][m.id] = benchmarkModelScore(b, m.id, activeMetricId, sourceMode);
       });
     });
     return matrix;
-  }, [activeMetricId, benchmarks, selectedBenchmarks, visibleModels]);
+  }, [activeMetricId, benchmarks, selectedBenchmarks, visibleModels, sourceMode]);
 
   // Per-model averages: standalone benchmarks + one aggregate per selected suite (no double-counting)
   const modelAverages: ModelAveragesType[] = useMemo(() => {
@@ -111,6 +114,7 @@ export function useDashboard(
           selectedBenchmarks,
           m.id,
           activeMetricId,
+          sourceMode,
         );
         if (agg != null) scores.push(agg);
       });
@@ -121,7 +125,7 @@ export function useDashboard(
           : null,
       };
     });
-  }, [visibleModels, benchmarks, benchmarkSuites, scoreMatrix, selectedBenchmarks, bmMap, activeMetricId]);
+  }, [visibleModels, benchmarks, benchmarkSuites, scoreMatrix, selectedBenchmarks, bmMap, activeMetricId, sourceMode]);
 
   // Helper to get score for dashboard row
   const scoreForTopRow = useCallback(
@@ -133,14 +137,15 @@ export function useDashboard(
             bmMap,
             selectedBenchmarks,
             mId,
-            activeMetricId
+            activeMetricId,
+            sourceMode
           ) ??
           -1
         );
       }
       return scoreMatrix[row.b.id]?.[mId] ?? -1;
     },
-    [activeMetricId, bmMap, selectedBenchmarks, scoreMatrix],
+    [activeMetricId, bmMap, selectedBenchmarks, scoreMatrix, sourceMode],
   );
 
   // Ordered and sorted rows for the data table
@@ -247,7 +252,7 @@ export function useDashboard(
       if (!groups[macroGroup]) groups[macroGroup] = {};
       visibleModels.forEach((m) => {
         if (!groups[macroGroup][m.id]) groups[macroGroup][m.id] = [];
-        const score = benchmarkModelScore(b, m.id, activeMetricId);
+        const score = benchmarkModelScore(b, m.id, activeMetricId, sourceMode);
         if (score != null) groups[macroGroup][m.id].push(score);
       });
     });
@@ -282,6 +287,7 @@ export function useDashboard(
           selectedBenchmarks,
           m.id,
           activeMetricId,
+          sourceMode,
         );
         entry[m.id] = v != null ? Math.round(v) : 0;
       });
@@ -289,7 +295,7 @@ export function useDashboard(
     });
 
     return [...macroRows, ...suiteRows];
-  }, [activeMetricId, benchmarks, benchmarkSuites, selectedBenchmarks, visibleModels, bmMap, lang]);
+  }, [activeMetricId, benchmarks, benchmarkSuites, selectedBenchmarks, visibleModels, bmMap, lang, sourceMode]);
 
   // Event handlers
   const handleSort = useCallback((col: string) => {
