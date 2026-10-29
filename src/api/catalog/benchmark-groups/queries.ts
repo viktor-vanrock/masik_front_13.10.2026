@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { shouldRetry } from '@/services/http';
 import { CATALOG_QUERY_KEYS } from '../queryKeys';
@@ -7,13 +8,14 @@ import type { BenchmarkTestListQuery } from '@/types';
 export interface UseBenchmarkGroupsOptions {
   pageSize?: number;
   enabled?: boolean;
+  loadAllPages?: boolean;
 }
 
 export function useBenchmarkGroupsQuery(
   query: BenchmarkTestListQuery,
-  { pageSize = 30, enabled = true }: UseBenchmarkGroupsOptions = {},
+  { pageSize = 30, enabled = true, loadAllPages = false }: UseBenchmarkGroupsOptions = {},
 ) {
-  return useInfiniteQuery({
+  const result = useInfiniteQuery({
     enabled,
     queryKey: CATALOG_QUERY_KEYS.group(query),
     queryFn: ({ pageParam }) =>
@@ -26,4 +28,13 @@ export function useBenchmarkGroupsQuery(
     placeholderData: keepPreviousData,
     retry: shouldRetry,
   });
+
+  const { hasNextPage, isFetchingNextPage, isError, fetchNextPage } = result;
+  useEffect(() => {
+    if (enabled && loadAllPages && hasNextPage && !isFetchingNextPage && !isError) {
+      void fetchNextPage();
+    }
+  }, [enabled, loadAllPages, hasNextPage, isFetchingNextPage, isError, fetchNextPage]);
+
+  return result;
 }

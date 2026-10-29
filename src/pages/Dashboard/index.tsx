@@ -128,8 +128,10 @@ export function Dashboard() {
     isPending: isGroupsPending,
     isError: isGroupsError,
     error: groupsError,
+    hasNextPage: hasMoreGroups,
+    isFetchingNextPage: isFetchingMoreGroups,
     refetch: refetchGroups,
-  } = useBenchmarkGroupsQuery({}, { pageSize: 1000 });
+  } = useBenchmarkGroupsQuery({}, { pageSize: 1000, loadAllPages: true });
   const {
     data: models = [],
     isPending: isModelsPending,
@@ -293,7 +295,7 @@ export function Dashboard() {
     else createBoard.mutate(board, { onSuccess: (saved) => { setActiveBoard(saved.id); setEditingBoardId(null); } });
   };
 
-  const isPending = isGroupsPending || isModelsPending;
+  const isPending = isGroupsPending || isModelsPending || hasMoreGroups || isFetchingMoreGroups;
   const isError = isGroupsError || isModelsError;
   const error = groupsError ?? modelsError;
   const hasMetricResults = benchmarks.some((benchmark) =>
@@ -305,6 +307,14 @@ export function Dashboard() {
     void refetchModels();
   };
 
+  if (isError) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <CatalogErrorState error={error} onRetry={retry} />
+      </div>
+    );
+  }
+
   if (isPending) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -314,14 +324,6 @@ export function Dashboard() {
         >
           {t.catalogue.loading}
         </div>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <CatalogErrorState error={error} onRetry={retry} />
       </div>
     );
   }
@@ -348,7 +350,9 @@ export function Dashboard() {
             <label className="relative flex min-w-[220px] max-w-[400px] flex-[1_1_220px] items-center max-[760px]:max-w-none max-[760px]:basis-[220px]"><Search size={20} className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-[#686e78]" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Найти модель" aria-label="Найти модель" className="min-h-12 w-full min-w-0 rounded-lg border border-[#d1d7de] bg-white py-3 pr-4 pl-12 text-sm leading-[22px] text-[#1e1e20] transition-colors duration-150 focus:border-[#515dad] focus:outline-2 focus:outline-offset-1 focus:outline-[#515dad33]" /></label>
             <LeaderboardSelect value={basket} onChange={setBasket} label="Корзина задач" options={[{ value: 'all', label: 'Все корзины' }, { value: 'simple', label: 'Простая' }, { value: 'middle', label: 'Средняя' }, { value: 'hard', label: 'Сложная' }]} />
             <LeaderboardSelect value={architecture} onChange={setArchitecture} label="Архитектура" options={[{ value: 'all', label: 'Все архитектуры' }, ...ARCHITECTURES.map(([value, label]) => ({ value, label }))]} />
+            {/* Budget filter is hidden until model results include budget data.
             <LeaderboardSelect value={budget} onChange={setBudget} label="Бюджет" options={[{ value: 'all', label: 'Все бюджеты' }, { value: 'small', label: 'Малый бюджет' }, { value: 'medium', label: 'Средний бюджет' }, { value: 'large', label: 'Большой бюджет' }]} />
+            */}
             <button type="button" className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-[30px] border-0 bg-[#9097a126] px-3.5 py-2 text-xs text-[#1e1e20]" onClick={() => { setSearch(''); setBasket('all'); setArchitecture('all'); setBudget('all'); }}>Сбросить</button>
             <div className="ml-auto flex items-center gap-3 whitespace-nowrap max-[760px]:ml-0"><span className="whitespace-nowrap text-xs text-[#686e78]">{rankedModels.length} {pluralRu(rankedModels.length, ['прогон', 'прогона', 'прогонов'])}</span><button type="button" className="grid size-10 cursor-pointer place-items-center rounded-[10px] border border-[#e9edf2] bg-white text-[19px] text-[#1e1e20] transition-colors duration-150 hover:border-[#d1d7de] hover:bg-[#f3f6fa]" onClick={() => setView((current) => current === 'table' ? 'bars' : 'table')} aria-label={view === 'table' ? 'Показать диаграмму' : 'Показать таблицу'}>{view === 'table' ? <svg viewBox="0 0 20 20" aria-hidden="true" className="block size-5 fill-none stroke-current stroke-[1.65] [stroke-linecap:round] [stroke-linejoin:round]"><path d="M2 15V9m5 6V5m5 10V2m4 13H1" /></svg> : <svg viewBox="0 0 18 18" aria-hidden="true" className="block size-5 fill-none stroke-current stroke-[1.65] [stroke-linecap:round] [stroke-linejoin:round]"><path d="M2 2h5v5H2zM11 2h5v5h-5zM2 11h5v5H2zM11 11h5v5h-5z" /></svg>}</button></div>
           </div>

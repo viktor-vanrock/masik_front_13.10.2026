@@ -16,7 +16,7 @@ export function RunResult() {
   const requestedMode = searchParams.get('sourceMode');
   const invalidMode = requestedMode !== null && !SOURCE_MODES.includes(requestedMode as SourceMode);
   const sourceMode: SourceMode = invalidMode || requestedMode === null ? 'benchmark' : requestedMode as SourceMode;
-  const { data: groupsResponse, isPending, isError, error } = useBenchmarkGroupsQuery({}, { pageSize: 1000 });
+  const { data: groupsResponse, isPending, isError, error, hasNextPage, isFetchingNextPage } = useBenchmarkGroupsQuery({}, { pageSize: 1000, loadAllPages: true });
   const runByMode = useMemo(() => {
     const tests = groupsResponse?.pages
       .flatMap((page) => page.data)
@@ -33,24 +33,31 @@ export function RunResult() {
   ];
 
   const downloadResult = () => {
+    let url: string | undefined;
+    let link: HTMLAnchorElement | undefined;
+    let revokeScheduled = false;
     try {
       setDownloadError(false);
       const result = JSON.stringify({ modelId, model: run.modelName, sourceMode, score: run.score, auqtc: run.auqtc, tokensPerSec: run.speed, resultsByMode: runByMode.modes }, null, 2);
-      const url = URL.createObjectURL(new Blob([result], { type: 'application/json' }));
-      const link = document.createElement('a');
+      const createdUrl = URL.createObjectURL(new Blob([result], { type: 'application/json' }));
+      url = createdUrl;
+      link = document.createElement('a');
       link.href = url;
       link.download = 'run-result.json';
       document.body.append(link);
       link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      window.setTimeout(() => URL.revokeObjectURL(createdUrl), 1000);
+      revokeScheduled = true;
     } catch {
       setDownloadError(true);
+    } finally {
+      link?.remove();
+      if (url && !revokeScheduled) URL.revokeObjectURL(url);
     }
   };
 
-  if (isPending) return <div className="run-result-page"><div className="run-result-container run-result-status">{t.runResult.loading}</div></div>;
   if (isError) return <div className="run-result-page"><div className="run-result-container run-result-status">{error instanceof Error ? error.message : t.runResult.loadError}</div></div>;
+  if (isPending || hasNextPage || isFetchingNextPage) return <div className="run-result-page"><div className="run-result-container run-result-status">{t.runResult.loading}</div></div>;
   if (!modelId || !run.modelName) return <div className="run-result-page"><div className="run-result-container run-result-status"><h1>{t.runResult.notFound}</h1><p>{t.runResult.openFromBoard}</p><button type="button" className="run-result-button primary" onClick={() => navigate(ROUTES.DASHBOARD)}>{t.runResult.backToBoards}</button></div></div>;
 
   return (
@@ -65,7 +72,6 @@ export function RunResult() {
           </div>
           <div className="run-result-actions">
             <button type="button" className="run-result-button" style={{ color: '#515dad' }} onClick={downloadResult}><Download size={18} />{t.runResult.downloadJson}</button>
-            <button type="button" className="run-result-button primary" aria-disabled="true" tabIndex={-1}>{t.runResult.newRun}<svg viewBox="0 0 18 18" aria-hidden="true"><path d="M4 9h10m-4-4 4 4-4 4" /></svg></button>
           </div>
         </header>
 
