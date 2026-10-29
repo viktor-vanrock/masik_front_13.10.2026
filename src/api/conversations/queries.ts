@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { shouldRetry } from '@/services/http';
 import { CONVERSATIONS_QUERY_KEYS } from './queryKeys';
-import { listConversations, getConversation } from './requests';
+import { listConversations, listSidebarConversations, getConversation } from './requests';
 import type { ConversationDto, ConversationDetailDto } from './types';
 
 interface QueryOptions {
@@ -13,6 +13,18 @@ export function useConversationsQuery(userId: string | null, options: QueryOptio
     queryKey: CONVERSATIONS_QUERY_KEYS.list(userId ?? ''),
     queryFn: listConversations,
     enabled: !!userId && (options.enabled ?? true),
+    retry: shouldRetry,
+    staleTime: 30_000,
+  });
+}
+
+export function useSidebarConversationsQuery(userId: string | null) {
+  return useInfiniteQuery({
+    queryKey: CONVERSATIONS_QUERY_KEYS.sidebar(userId ?? ''),
+    queryFn: ({ pageParam }) => listSidebarConversations(pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, pages) => pages.length * 20 < lastPage.total ? pages.length + 1 : undefined,
+    enabled: !!userId,
     retry: shouldRetry,
     staleTime: 30_000,
   });

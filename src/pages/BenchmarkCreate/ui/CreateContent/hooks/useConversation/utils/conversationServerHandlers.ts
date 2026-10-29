@@ -303,7 +303,7 @@ export function createConversationServerHandlers({
               benchmarkName: detail.title ?? d.benchmarkName,
               benchmarkNameEn: detail.title ?? d.benchmarkNameEn,
               isArchived: detail.isArchived ?? false,
-              isPinned: detail.isPinned ?? false,
+              pinnedDate: detail.pinnedDate ?? null,
               ...(nextStatus ? { status: nextStatus } : {}),
             };
           }),

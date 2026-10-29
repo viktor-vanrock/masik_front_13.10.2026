@@ -98,6 +98,7 @@ export const CreateContent = () => {
 
   const {
     dialogues, activeId, activeDialogue, entryConversationId, isTyping, connectionError, startNewSession, retryEntrySession,
+    loadMoreDialogues, hasMoreDialogues, isLoadingMoreDialogues, loadedHistoryCount,
     startDerivedCreation, renameDialogue, toggleArchive, togglePin, sendMessage, acceptRecommendation, rejectRecommendation, generation,
     generationError, retryGeneration, refreshGeneration, isRetryingGeneration, retryGenerationError, cancelGeneration,
     isCancellingGeneration, cancelGenerationError, production, productionLoading, productionError, refreshProduction,
@@ -205,6 +206,10 @@ export const CreateContent = () => {
       >
         <Sidebar
           dialogues={dialogues}
+          onLoadMore={() => { void loadMoreDialogues(); }}
+          hasMore={hasMoreDialogues}
+          isLoadingMore={isLoadingMoreDialogues}
+          loadedHistoryCount={loadedHistoryCount}
           activeId={activeId}
           onNewSession={() => { startNewSession(); if (derivedEntry) navigate('/create', { replace: true }); setMobileSidebarOpen(false); }}
           onSelectDialogue={(id) => {

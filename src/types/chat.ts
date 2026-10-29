@@ -87,5 +87,5 @@ export interface Dialogue {
   conversationStatus?: ConversationStatus;
   catalogSubmissionStatus?: 'validation' | 'published' | 'rejected' | null;
   isArchived?: boolean;
-  isPinned?: boolean;
+  pinnedDate?: string | null;
 }

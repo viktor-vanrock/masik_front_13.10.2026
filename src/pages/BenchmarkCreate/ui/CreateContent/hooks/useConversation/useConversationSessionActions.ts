@@ -100,7 +100,7 @@ export function useConversationSessionActions(options: Options) {
               benchmarkName: detail.title ?? existing?.benchmarkName ?? name.ru,
               benchmarkNameEn: detail.title ?? existing?.benchmarkNameEn ?? name.en,
               isArchived: detail.isArchived ?? false,
-              isPinned: detail.isPinned ?? false,
+              pinnedDate: detail.pinnedDate ?? null,
               startedAt: detail.createdAt,
               updatedAt: detail.updatedAt,
               status: dialogueStatus,
@@ -252,19 +252,20 @@ export function useConversationSessionActions(options: Options) {
     const target = dialogues.find((dialogue) => dialogue.id === id);
     if (!target?.conversationId || pendingPins.current.has(id)) return;
     pendingPins.current.add(id);
-    const next = !target.isPinned;
+    const next = !target.pinnedDate;
+    const optimisticPinnedDate = next ? new Date().toISOString() : null;
     setSocketDialogues((previous) => previous.some((dialogue) => dialogue.id === id)
-      ? previous.map((dialogue) => dialogue.id === id ? { ...dialogue, isPinned: next } : dialogue)
-      : [{ ...target, isPinned: next }, ...previous]);
+      ? previous.map((dialogue) => dialogue.id === id ? { ...dialogue, pinnedDate: optimisticPinnedDate } : dialogue)
+      : [{ ...target, pinnedDate: optimisticPinnedDate }, ...previous]);
     try {
       const updated = await updateConversation(target.conversationId, { isPinned: next });
       setSocketDialogues((previous) => previous.map((dialogue) => dialogue.id === id
-        ? { ...dialogue, isPinned: updated.isPinned ?? next, updatedAt: updated.updatedAt }
+        ? { ...dialogue, pinnedDate: updated.pinnedDate ?? null, updatedAt: updated.updatedAt }
         : dialogue));
       void getQueryClient()?.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEYS.lists() });
     } catch {
       setSocketDialogues((previous) => previous.map((dialogue) =>
-        dialogue.id === id ? { ...dialogue, isPinned: !next } : dialogue));
+        dialogue.id === id ? { ...dialogue, pinnedDate: target.pinnedDate ?? null } : dialogue));
       setConnectionError('Не удалось изменить закрепление чата. Повторите попытку.');
     } finally {
       pendingPins.current.delete(id);

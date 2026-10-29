@@ -5,7 +5,7 @@ import { CONV_SESSION_KEY, CONV_STATUS_KEY, CONV_OWNER_KEY } from '@/services/au
 import { getQueryClient } from "@/services/query";
 import {
   CONVERSATIONS_QUERY_KEYS,
-  useConversationsQuery,
+  useSidebarConversationsQuery,
 } from "@/api/conversations";
 import type { Dialogue } from "@/types";
 import { DialogueStatus } from "@/types";
@@ -26,7 +26,16 @@ export function useConversation({ entryIntentKey, entryReady = true, entryTitle,
   const location = useLocation();
   const navigate = useNavigate();
   const requestedSessionId = new URLSearchParams(location.search).get('session');
-  const { data: conversationList } = useConversationsQuery(userId);
+  const sidebarQuery = useSidebarConversationsQuery(userId);
+  const conversationList = useMemo(() => {
+    const pages = sidebarQuery.data?.pages ?? [];
+    const first = pages[0];
+    return first ? [
+      ...first.pinned,
+      ...pages.flatMap((page) => page.data),
+      ...first.archived,
+    ] : [];
+  }, [sidebarQuery.data]);
 
   // Socket-updated dialogues (new sessions + incoming messages + create-phase).
   const [socketDialogues, setSocketDialogues] = useState<Dialogue[]>([]);
@@ -96,7 +105,7 @@ export function useConversation({ entryIntentKey, entryReady = true, entryTitle,
   }, [location.pathname, location.search, navigate]);
 
   const getConversationId = useCallback(
-    (dialogueId: string) => conversationList?.find((conversation) => conversation.id === dialogueId)?.id,
+    (dialogueId: string) => conversationList.find((conversation) => conversation.id === dialogueId)?.id,
     [conversationList],
   );
 
@@ -132,7 +141,7 @@ export function useConversation({ entryIntentKey, entryReady = true, entryTitle,
   // Merge REST list (base) with socket-updated dialogues (override by id).
   const dialogues = useMemo<Dialogue[]>(() => {
     const socketIds = new Set(socketDialogues.map((d) => d.id));
-    const restBase = (conversationList ?? [])
+    const restBase = conversationList
       .filter((c) => !socketIds.has(c.id))
       .map(dtoToDialogue);
     return [...socketDialogues, ...restBase];
@@ -203,6 +212,10 @@ export function useConversation({ entryIntentKey, entryReady = true, entryTitle,
     dialogues: activeDialogue
       ? dialogues.map((dialogue) => dialogue.id === activeDialogue.id ? activeDialogue : dialogue)
       : dialogues,
+    loadMoreDialogues: sidebarQuery.fetchNextPage,
+    hasMoreDialogues: sidebarQuery.hasNextPage,
+    isLoadingMoreDialogues: sidebarQuery.isFetchingNextPage,
+    loadedHistoryCount: sidebarQuery.data?.pages.reduce((count, page) => count + page.data.length, 0) ?? 20,
     activeId,
     activeDialogue,
     entryConversationId: entryIntentKey && requestedSessionId ? requestedSessionId : entryConversationId,

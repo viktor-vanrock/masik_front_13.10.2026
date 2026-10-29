@@ -6,6 +6,10 @@ import { useState } from 'react';
 
 interface Props {
   dialogues: Dialogue[];
+  onLoadMore: () => void;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  loadedHistoryCount: number;
   activeId: string | null;
   onNewSession: () => void;
   onSelectDialogue: (id: string) => void;
@@ -19,6 +23,10 @@ interface Props {
 
 export const Sidebar = ({
   dialogues,
+  onLoadMore,
+  hasMore,
+  isLoadingMore,
+  loadedHistoryCount,
   activeId,
   onNewSession,
   onSelectDialogue,
@@ -33,9 +41,13 @@ export const Sidebar = ({
   const [archiveOpen, setArchiveOpen] = useState(false);
 
   const archivedIdSet = new Set(archivedIds);
-  const sortedDialogues = [...dialogues].sort((a, b) => Number(Boolean(b.isPinned)) - Number(Boolean(a.isPinned)));
-  const activeDialogues = sortedDialogues.filter((dialogue) => !archivedIdSet.has(dialogue.id));
-  const archivedDialogues = sortedDialogues.filter((dialogue) => archivedIdSet.has(dialogue.id));
+  const activeDialogues = dialogues.filter((dialogue) => !archivedIdSet.has(dialogue.id));
+  const pinnedDialogues = activeDialogues.filter((dialogue) => dialogue.pinnedDate)
+    .sort((a, b) => Date.parse(b.pinnedDate!) - Date.parse(a.pinnedDate!) || b.id.localeCompare(a.id));
+  const historyDialogues = activeDialogues.filter((dialogue) => !dialogue.pinnedDate)
+    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt) || b.id.localeCompare(a.id));
+  const archivedDialogues = dialogues.filter((dialogue) => archivedIdSet.has(dialogue.id))
+    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt) || a.id.localeCompare(b.id));
 
   return (
     <aside
@@ -70,23 +82,45 @@ export const Sidebar = ({
           <span className="col-start-2 whitespace-nowrap">{t.create.newChat}</span>
         </button>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4">
-          <p className="flex-none px-2 text-xs leading-[1.5] text-[#686e78]">Чаты создания бенчмарков</p>
-          <div className="grid min-h-0 content-start gap-2 overflow-y-auto overscroll-contain pr-2 scrollbar-thin">
-            {activeDialogues.map((dialogue) => (
-              <DialogueListItem
-                key={dialogue.id}
-                dialogue={dialogue}
-                onTogglePin={() => onTogglePin(dialogue.id)}
-                displayStatus={deriveDisplayStatus(dialogue)}
-                isActive={dialogue.id === activeId}
-                onClick={() => {
-                  onSelectDialogue(dialogue.id);
-                  onCloseMobile();
-                }}
-              />
-            ))}
-          </div>
+        <div
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-2 scrollbar-thin"
+          onScroll={(event) => {
+            const element = event.currentTarget;
+            if (hasMore && !isLoadingMore && element.scrollHeight - element.scrollTop - element.clientHeight < 120) onLoadMore();
+          }}
+        >
+          {pinnedDialogues.length > 0 && <section>
+            <div className="grid content-start gap-2">
+              {pinnedDialogues.map((dialogue) => (
+                <DialogueListItem
+                  key={dialogue.id}
+                  dialogue={dialogue}
+                  onTogglePin={() => onTogglePin(dialogue.id)}
+                  displayStatus={deriveDisplayStatus(dialogue)}
+                  isActive={dialogue.id === activeId}
+                  onClick={() => { onSelectDialogue(dialogue.id); onCloseMobile(); }}
+                />
+              ))}
+            </div>
+          </section>}
+          <section className={pinnedDialogues.length > 0 ? 'mt-2' : ''}>
+            <div className="grid content-start gap-2">
+              {historyDialogues.slice(0, Math.max(loadedHistoryCount, 20)).map((dialogue) => (
+                <DialogueListItem
+                  key={dialogue.id}
+                  dialogue={dialogue}
+                  onTogglePin={() => onTogglePin(dialogue.id)}
+                  displayStatus={deriveDisplayStatus(dialogue)}
+                  isActive={dialogue.id === activeId}
+                  onClick={() => {
+                    onSelectDialogue(dialogue.id);
+                    onCloseMobile();
+                  }}
+                />
+              ))}
+            </div>
+          </section>
+          {isLoadingMore && <p className="py-2 text-center text-xs text-[#686e78]" role="status">Загрузка…</p>}
         </div>
 
         <div className="static flex-none mt-auto">

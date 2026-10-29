@@ -58,14 +58,14 @@ export const DialogueListItem = ({
       {d.conversationId && <button
         type="button"
         onClick={onTogglePin}
-        aria-label={d.isPinned ? (lang === 'ru' ? 'Открепить чат' : 'Unpin chat') : (lang === 'ru' ? 'Закрепить чат' : 'Pin chat')}
-        title={d.isPinned ? (lang === 'ru' ? 'Открепить чат' : 'Unpin chat') : (lang === 'ru' ? 'Закрепить чат' : 'Pin chat')}
-        aria-pressed={Boolean(d.isPinned)}
+        aria-label={d.pinnedDate ? (lang === 'ru' ? 'Открепить чат' : 'Unpin chat') : (lang === 'ru' ? 'Закрепить чат' : 'Pin chat')}
+        title={d.pinnedDate ? (lang === 'ru' ? 'Открепить чат' : 'Unpin chat') : (lang === 'ru' ? 'Закрепить чат' : 'Pin chat')}
+        aria-pressed={Boolean(d.pinnedDate)}
         className={[
           'm-2 p-1.5 rounded-md border-0 bg-transparent text-[#515dad] cursor-pointer hover:bg-[#eeeff7]',
-          d.isPinned ? '' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100',
+          d.pinnedDate ? '' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100',
         ].join(' ')}
-      ><Pin size={16} fill={d.isPinned ? 'currentColor' : 'none'} /></button>}
+      ><Pin size={16} fill={d.pinnedDate ? 'currentColor' : 'none'} /></button>}
     </div>
   );
 };

@@ -21,7 +21,7 @@ const state = vi.hoisted(() => ({
 vi.mock('@/hooks/useApp', () => ({ useApp: () => ({ t: translations.ru, status: 'authenticated', user: { id: state.userId } }) }));
 vi.mock('@/api/conversations', async (original) => ({
   ...await original<typeof import('@/api/conversations')>(),
-  useConversationsQuery: () => ({ data: [{ id: 'conversation', status: 'awaiting_choice', createdAt: '', updatedAt: '' }] }),
+  useSidebarConversationsQuery: () => ({ data: { pages: [{ pinned: [], data: [{ id: 'conversation', status: 'awaiting_choice', createdAt: '', updatedAt: '' }], total: 1, archived: [] }] }, fetchNextPage: vi.fn(), hasNextPage: false, isFetchingNextPage: false }),
   getConversation: vi.fn(),
 }));
 vi.mock('@/services/socket', async (original) => ({
