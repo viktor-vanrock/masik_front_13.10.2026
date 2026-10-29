@@ -3,6 +3,8 @@ export const ROUTES = {
   GUIDE: '/guide',
   BENCHMARK: (id: string | number) => `/benchmark/${id}`,
   DASHBOARD: '/dashboard',
+  RUN_RESULT: (modelId: string) => `/run-result/${encodeURIComponent(modelId)}`,
+  RUN_RESULT_ROUTE: '/run-result/:modelId',
   PROFILE: '/profile',
   ADD_BENCHMARK: '/add-benchmark',
   CREATE: '/create',
