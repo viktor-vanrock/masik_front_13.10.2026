@@ -265,7 +265,7 @@ export function useConversationSessionActions(options: Options) {
       void getQueryClient()?.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEYS.lists() });
     } catch {
       setSocketDialogues((previous) => previous.map((dialogue) =>
-        dialogue.id === id ? { ...dialogue, pinnedDate: target.pinnedDate ?? null } : dialogue));
+        dialogue.id === id ? { ...dialogue, pinnedDate: target.pinnedDate ?? null, updatedAt: target.updatedAt } : dialogue));
       setConnectionError('Не удалось изменить закрепление чата. Повторите попытку.');
     } finally {
       pendingPins.current.delete(id);

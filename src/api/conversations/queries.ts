@@ -18,13 +18,16 @@ export function useConversationsQuery(userId: string | null, options: QueryOptio
   });
 }
 
-export function useSidebarConversationsQuery(userId: string | null) {
+export function useSidebarConversationsQuery(userId: string | null, options: QueryOptions = {}) {
   return useInfiniteQuery({
     queryKey: CONVERSATIONS_QUERY_KEYS.sidebar(userId ?? ''),
     queryFn: ({ pageParam }) => listSidebarConversations(pageParam),
     initialPageParam: 1,
-    getNextPageParam: (lastPage, pages) => pages.length * 20 < lastPage.total ? pages.length + 1 : undefined,
-    enabled: !!userId,
+    getNextPageParam: (lastPage, pages) => {
+      const loaded = pages.reduce((count, page) => count + page.data.length, 0);
+      return lastPage.data.length > 0 && loaded < lastPage.total ? pages.length + 1 : undefined;
+    },
+    enabled: !!userId && (options.enabled ?? true),
     retry: shouldRetry,
     staleTime: 30_000,
   });

@@ -412,6 +412,9 @@ export const translations = {
     create: {
       title: 'Рекомендация бенчмарка',
       newChat: 'Новый чат',
+      pinChat: 'Закрепить чат',
+      unpinChat: 'Открепить чат',
+      loadingChats: 'Загрузка чатов…',
       myDialogues: 'Мои сессии',
       placeholder: 'Введите сообщение...',
       send: 'Отправить',
@@ -1311,6 +1314,9 @@ export const translations = {
     create: {
       title: 'Benchmark recommendation',
       newChat: 'New Chat',
+      pinChat: 'Pin chat',
+      unpinChat: 'Unpin chat',
+      loadingChats: 'Loading chats…',
       myDialogues: 'My Sessions',
       placeholder: 'Type a message...',
       send: 'Send',

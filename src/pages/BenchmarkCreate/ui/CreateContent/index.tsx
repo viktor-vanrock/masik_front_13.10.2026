@@ -98,7 +98,7 @@ export const CreateContent = () => {
 
   const {
     dialogues, activeId, activeDialogue, entryConversationId, isTyping, connectionError, startNewSession, retryEntrySession,
-    loadMoreDialogues, hasMoreDialogues, isLoadingMoreDialogues, loadedHistoryCount,
+    loadMoreDialogues, hasMoreDialogues, isLoadingMoreDialogues,
     startDerivedCreation, renameDialogue, toggleArchive, togglePin, sendMessage, acceptRecommendation, rejectRecommendation, generation,
     generationError, retryGeneration, refreshGeneration, isRetryingGeneration, retryGenerationError, cancelGeneration,
     isCancellingGeneration, cancelGenerationError, production, productionLoading, productionError, refreshProduction,
@@ -109,8 +109,6 @@ export const CreateContent = () => {
     entryTitle,
     derivedIntent: entryDerivedIntent,
   });
-
-  const archivedDialogueIds = dialogues.filter((dialogue) => dialogue.isArchived).map((dialogue) => dialogue.id);
 
   useEffect(() => { resetPublish(); }, [activeId, resetPublish]);
 
@@ -206,10 +204,9 @@ export const CreateContent = () => {
       >
         <Sidebar
           dialogues={dialogues}
-          onLoadMore={() => { void loadMoreDialogues(); }}
+          onLoadMore={() => loadMoreDialogues({ cancelRefetch: false })}
           hasMore={hasMoreDialogues}
           isLoadingMore={isLoadingMoreDialogues}
-          loadedHistoryCount={loadedHistoryCount}
           activeId={activeId}
           onNewSession={() => { startNewSession(); if (derivedEntry) navigate('/create', { replace: true }); setMobileSidebarOpen(false); }}
           onSelectDialogue={(id) => {
@@ -223,7 +220,6 @@ export const CreateContent = () => {
             navigate(`/create?${next.toString()}`, { replace: true });
           }}
           onTogglePin={togglePin}
-          archivedIds={archivedDialogueIds}
           deriveDisplayStatus={(d) => deriveDisplayStatus(
             d,
             d.id === activeId ? generation : undefined,

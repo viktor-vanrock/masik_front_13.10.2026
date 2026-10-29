@@ -2,18 +2,16 @@ import type { Dialogue, DisplayStatus } from '@/types';
 import { ChevronRight, Menu } from 'lucide-react';
 import { DialogueListItem } from './DialogueListItem';
 import { useApp } from '@/hooks/useApp';
-import { useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 interface Props {
   dialogues: Dialogue[];
-  onLoadMore: () => void;
+  onLoadMore: () => Promise<unknown>;
   hasMore: boolean;
   isLoadingMore: boolean;
-  loadedHistoryCount: number;
   activeId: string | null;
   onNewSession: () => void;
   onSelectDialogue: (id: string) => void;
-  archivedIds: string[];
   onTogglePin: (id: string) => void;
   deriveDisplayStatus: (dialogue: Dialogue) => DisplayStatus;
   mobileOpen: boolean;
@@ -26,11 +24,9 @@ export const Sidebar = ({
   onLoadMore,
   hasMore,
   isLoadingMore,
-  loadedHistoryCount,
   activeId,
   onNewSession,
   onSelectDialogue,
-  archivedIds,
   onTogglePin,
   deriveDisplayStatus,
   mobileOpen,
@@ -39,15 +35,18 @@ export const Sidebar = ({
 }: Props) => {
   const { t } = useApp();
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const loadPending = useRef(false);
 
-  const archivedIdSet = new Set(archivedIds);
-  const activeDialogues = dialogues.filter((dialogue) => !archivedIdSet.has(dialogue.id));
-  const pinnedDialogues = activeDialogues.filter((dialogue) => dialogue.pinnedDate)
-    .sort((a, b) => Date.parse(b.pinnedDate!) - Date.parse(a.pinnedDate!) || b.id.localeCompare(a.id));
-  const historyDialogues = activeDialogues.filter((dialogue) => !dialogue.pinnedDate)
-    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt) || b.id.localeCompare(a.id));
-  const archivedDialogues = dialogues.filter((dialogue) => archivedIdSet.has(dialogue.id))
-    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt) || a.id.localeCompare(b.id));
+  const { pinnedDialogues, historyDialogues, archivedDialogues } = useMemo(() => {
+    const activeDialogues = dialogues.filter((dialogue) => !dialogue.isArchived);
+    const byUpdated = (a: Dialogue, b: Dialogue) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt) || b.id.localeCompare(a.id);
+    return {
+      pinnedDialogues: activeDialogues.filter((dialogue) => dialogue.pinnedDate)
+        .sort((a, b) => Date.parse(b.pinnedDate!) - Date.parse(a.pinnedDate!) || b.id.localeCompare(a.id)),
+      historyDialogues: activeDialogues.filter((dialogue) => !dialogue.pinnedDate).sort(byUpdated),
+      archivedDialogues: dialogues.filter((dialogue) => dialogue.isArchived).sort(byUpdated),
+    };
+  }, [dialogues]);
 
   return (
     <aside
@@ -86,7 +85,10 @@ export const Sidebar = ({
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-2 scrollbar-thin"
           onScroll={(event) => {
             const element = event.currentTarget;
-            if (hasMore && !isLoadingMore && element.scrollHeight - element.scrollTop - element.clientHeight < 120) onLoadMore();
+            if (hasMore && !isLoadingMore && !loadPending.current && element.scrollHeight - element.scrollTop - element.clientHeight < 120) {
+              loadPending.current = true;
+              void onLoadMore().finally(() => { loadPending.current = false; });
+            }
           }}
         >
           {pinnedDialogues.length > 0 && <section>
@@ -105,7 +107,7 @@ export const Sidebar = ({
           </section>}
           <section className={pinnedDialogues.length > 0 ? 'mt-2' : ''}>
             <div className="grid content-start gap-2">
-              {historyDialogues.slice(0, Math.max(loadedHistoryCount, 20)).map((dialogue) => (
+              {historyDialogues.map((dialogue) => (
                 <DialogueListItem
                   key={dialogue.id}
                   dialogue={dialogue}
@@ -120,7 +122,7 @@ export const Sidebar = ({
               ))}
             </div>
           </section>
-          {isLoadingMore && <p className="py-2 text-center text-xs text-[#686e78]" role="status">Загрузка…</p>}
+          {isLoadingMore && <p className="py-2 text-center text-xs text-[#686e78]" role="status">{t.create.loadingChats}</p>}
         </div>
 
         <div className="static flex-none mt-auto">

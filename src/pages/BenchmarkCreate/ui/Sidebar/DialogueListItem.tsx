@@ -22,7 +22,8 @@ export const DialogueListItem = ({
   isArchived = false,
 }: Props) => {
   const cfg = DISPLAY_STATUS_CONFIG[displayStatus];
-  const { lang } = useApp();
+  const { lang, t } = useApp();
+  const pinLabel = d.pinnedDate ? t.create.unpinChat : t.create.pinChat;
   const statusColors = cfg.tone === 'green'
     ? { backgroundColor: '#e5f4ee', color: '#0c7055' }
     : cfg.tone === 'brand'
@@ -58,8 +59,8 @@ export const DialogueListItem = ({
       {d.conversationId && <button
         type="button"
         onClick={onTogglePin}
-        aria-label={d.pinnedDate ? (lang === 'ru' ? 'Открепить чат' : 'Unpin chat') : (lang === 'ru' ? 'Закрепить чат' : 'Pin chat')}
-        title={d.pinnedDate ? (lang === 'ru' ? 'Открепить чат' : 'Unpin chat') : (lang === 'ru' ? 'Закрепить чат' : 'Pin chat')}
+        aria-label={pinLabel}
+        title={pinLabel}
         aria-pressed={Boolean(d.pinnedDate)}
         className={[
           'm-2 p-1.5 rounded-md border-0 bg-transparent text-[#515dad] cursor-pointer hover:bg-[#eeeff7]',

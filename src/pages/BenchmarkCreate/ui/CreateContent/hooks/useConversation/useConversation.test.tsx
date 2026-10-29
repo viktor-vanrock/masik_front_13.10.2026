@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { translations } from '@/i18n';
-import { getConversation } from '@/api/conversations';
+import { getConversation, updateConversation } from '@/api/conversations';
 import type { ConversationDetailDto } from '@/api/conversations';
 import { CONV_SESSION_KEY, CONV_OWNER_KEY, CONV_STATUS_KEY } from '@/services/auth';
 import { ApiException } from '@/services/http';
@@ -23,6 +23,7 @@ vi.mock('@/api/conversations', async (original) => ({
   ...await original<typeof import('@/api/conversations')>(),
   useSidebarConversationsQuery: () => ({ data: { pages: [{ pinned: [], data: [{ id: 'conversation', status: 'awaiting_choice', createdAt: '', updatedAt: '' }], total: 1, archived: [] }] }, fetchNextPage: vi.fn(), hasNextPage: false, isFetchingNextPage: false }),
   getConversation: vi.fn(),
+  updateConversation: vi.fn(),
 }));
 vi.mock('@/services/socket', async (original) => ({
   ...await original<typeof import('@/services/socket')>(), createChatSocket: () => state.socket,
@@ -42,6 +43,7 @@ beforeEach(() => {
   state.generation = undefined;
   state.socket.on.mockImplementation((event, handler) => { state.handlers.set(event, handler); });
   vi.mocked(getConversation).mockResolvedValue(detail);
+  vi.mocked(updateConversation).mockReset();
 });
 
 async function restore() {
@@ -53,6 +55,34 @@ async function restore() {
 }
 
 describe('useConversation integrated contracts', () => {
+  it('pins optimistically, blocks duplicate requests, and uses the server pin date', async () => {
+    const { result } = await restore();
+    let finish!: (value: typeof detail) => void;
+    vi.mocked(updateConversation).mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+
+    act(() => {
+      void result.current.togglePin(detail.id);
+      void result.current.togglePin(detail.id);
+    });
+    expect(result.current.activeDialogue?.pinnedDate).toBeTruthy();
+    expect(updateConversation).toHaveBeenCalledTimes(1);
+    expect(updateConversation).toHaveBeenCalledWith(detail.id, { isPinned: true });
+
+    await act(async () => { finish({ ...detail, pinnedDate: '2026-10-29T15:00:00.000Z', updatedAt: '2026-10-29T15:01:00.000Z' }); });
+    expect(result.current.activeDialogue?.pinnedDate).toBe('2026-10-29T15:00:00.000Z');
+    expect(result.current.activeDialogue?.updatedAt).toBe('2026-10-29T15:01:00.000Z');
+  });
+
+  it('restores the original pin and updated time if the request fails', async () => {
+    vi.mocked(getConversation).mockResolvedValue({ ...detail, pinnedDate: '2026-10-28T12:00:00.000Z' });
+    const { result } = await restore();
+    vi.mocked(updateConversation).mockRejectedValueOnce(new Error('network'));
+
+    await act(async () => { await result.current.togglePin(detail.id); });
+    expect(result.current.activeDialogue?.pinnedDate).toBe('2026-10-28T12:00:00.000Z');
+    expect(result.current.activeDialogue?.updatedAt).toBe(detail.updatedAt);
+    expect(result.current.connectionError).toContain('Не удалось изменить закрепление');
+  });
   it('clears owner/session/status and typing when identity changes without a remount', async () => {
     const { result, rerender } = await restore();
     expect(sessionStorage.getItem(CONV_STATUS_KEY)).toBe('awaiting_choice');

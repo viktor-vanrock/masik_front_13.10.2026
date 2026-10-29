@@ -91,9 +91,11 @@ export type ConversationsListRaw =
   | { data: ConversationDto[]; total: number; page?: number; limit?: number };
 
 export interface ConversationSidebarPage {
+  /** Pinned and archived lists are returned on the first page only. */
   pinned: ConversationDto[];
   data: ConversationDto[];
   total: number;
+  pageSize: number;
   archived: ConversationDto[];
 }
 

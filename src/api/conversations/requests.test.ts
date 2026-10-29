@@ -1,11 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { httpClient } from '@/services/http';
-import { cancelConversationGeneration, getConversationGeneration, getConversationProduction, startConversationProduction } from './requests';
+import { cancelConversationGeneration, getConversationGeneration, getConversationProduction, listSidebarConversations, startConversationProduction } from './requests';
 
 vi.mock('@/services/http', () => ({ httpClient: { get: vi.fn(), post: vi.fn() } }));
 afterEach(() => vi.clearAllMocks());
 
 describe('generation and producer gateway contract', () => {
+  it('requests a sidebar page through the registered endpoint', async () => {
+    const payload = { pinned: [], data: [], total: 0, pageSize: 20, archived: [] };
+    vi.mocked(httpClient.get).mockResolvedValue({ data: payload });
+    await expect(listSidebarConversations(3)).resolves.toEqual(payload);
+    expect(httpClient.get).toHaveBeenCalledWith('/conversations/sidebar', { params: { page: 3 } });
+  });
   it('sends selected indices and creator job ID without changing the producer payload', async () => {
     const job = { jobId: 'production', status: 'queued' };
     vi.mocked(httpClient.post).mockResolvedValue({ data: job });

@@ -18,7 +18,7 @@ export async function listConversations(): Promise<ConversationDto[]> {
 
 export async function listSidebarConversations(page: number): Promise<ConversationSidebarPage> {
   const { data } = await httpClient.get<ConversationSidebarPage>(
-    `${BACKEND_PATHS.conversations.list}/sidebar`,
+    BACKEND_PATHS.conversations.sidebar,
     { params: { page } },
   );
   return data;
