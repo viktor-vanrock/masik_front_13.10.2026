@@ -9,6 +9,10 @@ interface Props {
   onLoadMore: () => Promise<unknown>;
   hasMore: boolean;
   isLoadingMore: boolean;
+  onLoadMoreArchived: () => Promise<unknown>;
+  hasMoreArchived: boolean;
+  isLoadingMoreArchived: boolean;
+  archivedTotal: number;
   activeId: string | null;
   onNewSession: () => void;
   onSelectDialogue: (id: string) => void;
@@ -24,6 +28,10 @@ export const Sidebar = ({
   onLoadMore,
   hasMore,
   isLoadingMore,
+  onLoadMoreArchived,
+  hasMoreArchived,
+  isLoadingMoreArchived,
+  archivedTotal,
   activeId,
   onNewSession,
   onSelectDialogue,
@@ -36,6 +44,7 @@ export const Sidebar = ({
   const { t } = useApp();
   const [archiveOpen, setArchiveOpen] = useState(false);
   const loadPending = useRef(false);
+  const archiveLoadPending = useRef(false);
 
   const { pinnedDialogues, historyDialogues, archivedDialogues } = useMemo(() => {
     const activeDialogues = dialogues.filter((dialogue) => !dialogue.isArchived);
@@ -129,7 +138,14 @@ export const Sidebar = ({
           {archiveOpen && (
             <div className="absolute z-10 inset-x-0 top-16 bottom-10 flex min-h-0 flex-col gap-2 overflow-hidden pt-2 px-1 bg-[#fcfcfd] origin-bottom animate-[archive-open_180ms_ease-out_both]">
               <p className="flex-none text-xs leading-[1.5] text-[#686e78]">Архивированные чаты</p>
-              <div className="grid min-h-0 content-start flex-1 gap-1 overflow-y-auto overscroll-contain pr-2 scrollbar-thin">
+              <div className="grid min-h-0 content-start flex-1 gap-1 overflow-y-auto overscroll-contain pr-2 scrollbar-thin" onScroll={(event) => {
+                const element = event.currentTarget;
+                if (hasMoreArchived && !isLoadingMoreArchived && !archiveLoadPending.current
+                  && element.scrollHeight - element.scrollTop - element.clientHeight < 120) {
+                  archiveLoadPending.current = true;
+                  void onLoadMoreArchived().finally(() => { archiveLoadPending.current = false; });
+                }
+              }}>
                 {archivedDialogues.length ? archivedDialogues.map((dialogue) => (
                   <DialogueListItem
                     key={dialogue.id}
@@ -146,6 +162,7 @@ export const Sidebar = ({
                 )) : (
                   <p className="py-3.5 px-2.5 text-[11px] text-[#686e78]">Архив пуст</p>
                 )}
+                {isLoadingMoreArchived && <p className="py-2 text-center text-xs text-[#686e78]" role="status">{t.create.loadingChats}</p>}
               </div>
             </div>
           )}
@@ -156,7 +173,7 @@ export const Sidebar = ({
             aria-expanded={archiveOpen}
           >
             <ChevronRight size={15} className={`transition-transform duration-150 ${archiveOpen ? 'rotate-90' : ''}`} />
-            <span className="min-w-0 flex-1">Архивированные чаты ({archivedDialogues.length})</span>
+            <span className="min-w-0 flex-1">Архивированные чаты ({archivedTotal})</span>
           </button>
         </div>
       </div>

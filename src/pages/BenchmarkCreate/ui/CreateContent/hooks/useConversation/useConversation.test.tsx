@@ -22,6 +22,7 @@ vi.mock('@/hooks/useApp', () => ({ useApp: () => ({ t: translations.ru, status: 
 vi.mock('@/api/conversations', async (original) => ({
   ...await original<typeof import('@/api/conversations')>(),
   useSidebarConversationsQuery: () => ({ data: { pages: [{ pinned: [], data: [{ id: 'conversation', status: 'awaiting_choice', createdAt: '', updatedAt: '' }], total: 1, archived: [] }] }, fetchNextPage: vi.fn(), hasNextPage: false, isFetchingNextPage: false }),
+  useArchivedConversationsQuery: () => ({ data: { pages: [{ data: [], total: 0, pageSize: 20, hasNextPage: false }] }, fetchNextPage: vi.fn(), hasNextPage: false, isFetchingNextPage: false }),
   getConversation: vi.fn(),
   updateConversation: vi.fn(),
 }));
@@ -55,6 +56,14 @@ async function restore() {
 }
 
 describe('useConversation integrated contracts', () => {
+  it('ignores a dialogue ID that is absent from both the local and server lists', async () => {
+    const { result } = await restore();
+    vi.mocked(getConversation).mockClear();
+    act(() => result.current.selectDialogue('missing-dialogue'));
+    expect(result.current.activeId).toBe(detail.id);
+    expect(getConversation).not.toHaveBeenCalled();
+  });
+
   it('pins optimistically, blocks duplicate requests, and uses the server pin date', async () => {
     const { result } = await restore();
     let finish!: (value: typeof detail) => void;

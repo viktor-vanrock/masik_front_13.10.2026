@@ -4,10 +4,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import type { ConversationDto, ConversationSidebarPage } from './types';
 import { CONVERSATIONS_QUERY_KEYS } from './queryKeys';
-import { useConversationsQuery, useSidebarConversationsQuery } from './queries';
-import { listConversations, listSidebarConversations } from './requests';
+import { useArchivedConversationsQuery, useConversationsQuery, useSidebarConversationsQuery } from './queries';
+import { listArchivedConversations, listConversations, listSidebarConversations } from './requests';
 
-vi.mock('./requests', () => ({ listConversations: vi.fn(), listSidebarConversations: vi.fn(), getConversation: vi.fn() }));
+vi.mock('./requests', () => ({ listConversations: vi.fn(), listSidebarConversations: vi.fn(), listArchivedConversations: vi.fn(), getConversation: vi.fn() }));
 beforeEach(() => vi.clearAllMocks());
 
 const conversation = (id: string): ConversationDto => ({
@@ -18,14 +18,14 @@ const conversation = (id: string): ConversationDto => ({
 });
 
 describe('useSidebarConversationsQuery', () => {
-  it('keeps pinned and archived payloads and fetches a short first page when more history exists', async () => {
+  it('keeps pinned chats and fetches a short first page when more history exists', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const first: ConversationSidebarPage = {
-      pinned: [conversation('pin')], archived: [conversation('archive')],
-      data: [conversation('history-1')], total: 2, pageSize: 20,
+      pinned: [conversation('pin')],
+      data: [conversation('history-1')], total: 2, pageSize: 20, hasNextPage: true,
     };
     const second: ConversationSidebarPage = {
-      pinned: [], archived: [], data: [conversation('history-2')], total: 2, pageSize: 20,
+      pinned: [], data: [conversation('history-2')], total: 2, pageSize: 20, hasNextPage: false,
     };
     vi.mocked(listSidebarConversations).mockImplementation(async (page) => page === 1 ? first : second);
     const wrapper = ({ children }: { children: ReactNode }) =>
@@ -46,7 +46,7 @@ describe('useSidebarConversationsQuery', () => {
     const wrapper = ({ children }: { children: ReactNode }) =>
       <QueryClientProvider client={client}>{children}</QueryClientProvider>;
     const response: ConversationSidebarPage = {
-      pinned: [], archived: [], data: [conversation('alice')], total: 1, pageSize: 20,
+      pinned: [], data: [conversation('alice')], total: 1, pageSize: 20, hasNextPage: false,
     };
     vi.mocked(listSidebarConversations).mockResolvedValue(response);
     const { result, rerender } = renderHook(
@@ -59,6 +59,22 @@ describe('useSidebarConversationsQuery', () => {
     rerender({ userId: null, enabled: true });
     expect(result.current.data).toBeUndefined();
     expect(listSidebarConversations).toHaveBeenCalledOnce();
+  });
+});
+
+describe('useArchivedConversationsQuery', () => {
+  it('loads archive pages until hasNextPage is false', async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const first = { data: [conversation('archive-1')], total: 2, pageSize: 20, hasNextPage: true };
+    const second = { data: [conversation('archive-2')], total: 2, pageSize: 20, hasNextPage: false };
+    vi.mocked(listArchivedConversations).mockImplementation(async (page) => page === 1 ? first : second);
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    const { result } = renderHook(() => useArchivedConversationsQuery('alice'), { wrapper });
+    await waitFor(() => expect(result.current.data?.pages).toEqual([first]));
+    await act(async () => { await result.current.fetchNextPage(); });
+    await waitFor(() => expect(result.current.data?.pages).toEqual([first, second]));
+    expect(result.current.hasNextPage).toBe(false);
   });
 });
 

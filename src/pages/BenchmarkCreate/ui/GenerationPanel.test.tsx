@@ -162,7 +162,8 @@ describe('GenerationPanel', () => {
     ] };
     const { rerender } = render(<GenerationPanel {...props} generation={generation} />);
 
-    const feedback = screen.getByRole('status', { name: '' });
+    const feedback = screen.getAllByRole('status').find((element) =>
+      element.textContent?.includes('Задания созданы'))!;
     const tasks = screen.getAllByRole('article');
     expect(feedback).toHaveTextContent('Задания созданы (2)');
     expect(tasks).toHaveLength(2);

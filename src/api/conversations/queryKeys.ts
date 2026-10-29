@@ -3,6 +3,7 @@ export const CONVERSATIONS_QUERY_KEYS = {
   lists: () => [...CONVERSATIONS_QUERY_KEYS.all, 'list'] as const,
   list: (userId: string) => [...CONVERSATIONS_QUERY_KEYS.lists(), userId] as const,
   sidebar: (userId: string) => [...CONVERSATIONS_QUERY_KEYS.lists(), userId, 'sidebar'] as const,
+  archive: (userId: string) => [...CONVERSATIONS_QUERY_KEYS.lists(), userId, 'archive'] as const,
   details: () => [...CONVERSATIONS_QUERY_KEYS.all, 'detail'] as const,
   detail: (userId: string, id: string) => [...CONVERSATIONS_QUERY_KEYS.details(), userId, id] as const,
   generation: (userId: string, id: string) => [...CONVERSATIONS_QUERY_KEYS.detail(userId, id), 'generation'] as const,

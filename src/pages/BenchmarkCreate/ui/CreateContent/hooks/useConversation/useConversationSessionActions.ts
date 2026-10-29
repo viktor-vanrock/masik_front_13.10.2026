@@ -57,9 +57,9 @@ export function useConversationSessionActions(options: Options) {
       const selectionRequest = ++selectionRequestRef.current;
       const inSocket = socketDialogues.find((x) => x.id === id);
       const convId = inSocket?.conversationId ?? getConversationId(id);
-      // Local mock dialogues (Create phase, id = dlg-*) have no conversationId → skip socket.
+      // A local draft can be selected without a server conversation.
       if (!convId) {
-        setActiveId(id);
+        if (dialogues.some((dialogue) => dialogue.id === id && !dialogue.conversationId)) setActiveId(id);
         return;
       }
 
@@ -129,7 +129,7 @@ export function useConversationSessionActions(options: Options) {
       })();
     },
     [
-      socketDialogues, getConversationId, setActiveId, removeSessionParam, userId,
+      socketDialogues, dialogues, getConversationId, setActiveId, removeSessionParam, userId,
       historyLabelsRef, restoreRequestRef, selectionRequestRef, setIsTyping,
       setPendingSearchConversationId, setSocketDialogues, socketRef,
     ],

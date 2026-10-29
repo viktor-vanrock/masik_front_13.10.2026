@@ -5,6 +5,7 @@ import type {
   ConversationDetailDto,
   ConversationsListRaw,
   ConversationSidebarPage,
+  ArchivedConversationsPage,
   ConversationGenerationDto,
   ConversationProductionDto,
 } from './types';
@@ -19,6 +20,14 @@ export async function listConversations(): Promise<ConversationDto[]> {
 export async function listSidebarConversations(page: number): Promise<ConversationSidebarPage> {
   const { data } = await httpClient.get<ConversationSidebarPage>(
     BACKEND_PATHS.conversations.sidebar,
+    { params: { page } },
+  );
+  return data;
+}
+
+export async function listArchivedConversations(page: number): Promise<ArchivedConversationsPage> {
+  const { data } = await httpClient.get<ArchivedConversationsPage>(
+    BACKEND_PATHS.conversations.archive,
     { params: { page } },
   );
   return data;

@@ -6,6 +6,7 @@ import { getQueryClient } from "@/services/query";
 import {
   CONVERSATIONS_QUERY_KEYS,
   useSidebarConversationsQuery,
+  useArchivedConversationsQuery,
 } from "@/api/conversations";
 import type { Dialogue } from "@/types";
 import { DialogueStatus } from "@/types";
@@ -27,15 +28,16 @@ export function useConversation({ entryIntentKey, entryReady = true, entryTitle,
   const navigate = useNavigate();
   const requestedSessionId = new URLSearchParams(location.search).get('session');
   const sidebarQuery = useSidebarConversationsQuery(userId);
+  const archiveQuery = useArchivedConversationsQuery(userId);
   const conversationList = useMemo(() => {
     const pages = sidebarQuery.data?.pages ?? [];
     const first = pages[0];
     return first ? [
       ...first.pinned,
       ...pages.flatMap((page) => page.data),
-      ...first.archived,
+      ...(archiveQuery.data?.pages.flatMap((page) => page.data) ?? []),
     ] : [];
-  }, [sidebarQuery.data]);
+  }, [sidebarQuery.data, archiveQuery.data]);
 
   // Socket-updated dialogues (new sessions + incoming messages + create-phase).
   const [socketDialogues, setSocketDialogues] = useState<Dialogue[]>([]);
@@ -215,6 +217,10 @@ export function useConversation({ entryIntentKey, entryReady = true, entryTitle,
     loadMoreDialogues: sidebarQuery.fetchNextPage,
     hasMoreDialogues: sidebarQuery.hasNextPage,
     isLoadingMoreDialogues: sidebarQuery.isFetchingNextPage,
+    loadMoreArchived: archiveQuery.fetchNextPage,
+    hasMoreArchived: archiveQuery.hasNextPage,
+    isLoadingMoreArchived: archiveQuery.isFetchingNextPage,
+    archivedTotal: archiveQuery.data?.pages[0]?.total ?? 0,
     activeId,
     activeDialogue,
     entryConversationId: entryIntentKey && requestedSessionId ? requestedSessionId : entryConversationId,
