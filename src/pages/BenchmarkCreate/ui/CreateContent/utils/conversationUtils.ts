@@ -42,6 +42,7 @@ export function dtoToDialogue(conv: ConversationDto): Dialogue {
     benchmarkName: title,
     benchmarkNameEn: conv.title ?? name.en,
     isArchived: conv.isArchived ?? false,
+    isPinned: conv.isPinned ?? false,
     startedAt: conv.createdAt,
     updatedAt: conv.updatedAt ?? conv.createdAt,
     status:

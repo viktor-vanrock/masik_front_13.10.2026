@@ -98,7 +98,7 @@ export const CreateContent = () => {
 
   const {
     dialogues, activeId, activeDialogue, entryConversationId, isTyping, connectionError, startNewSession, retryEntrySession,
-    startDerivedCreation, renameDialogue, toggleArchive, sendMessage, acceptRecommendation, rejectRecommendation, generation,
+    startDerivedCreation, renameDialogue, toggleArchive, togglePin, sendMessage, acceptRecommendation, rejectRecommendation, generation,
     generationError, retryGeneration, refreshGeneration, isRetryingGeneration, retryGenerationError, cancelGeneration,
     isCancellingGeneration, cancelGenerationError, production, productionLoading, productionError, refreshProduction,
     startProduction, isStartingProduction, startProductionError,
@@ -217,6 +217,7 @@ export const CreateContent = () => {
             }
             navigate(`/create?${next.toString()}`, { replace: true });
           }}
+          onTogglePin={togglePin}
           archivedIds={archivedDialogueIds}
           deriveDisplayStatus={(d) => deriveDisplayStatus(
             d,

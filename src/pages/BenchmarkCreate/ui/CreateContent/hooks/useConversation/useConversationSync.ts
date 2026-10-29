@@ -93,6 +93,7 @@ export function useConversationHydration({
             benchmarkName: detail.title ?? existing?.benchmarkName ?? name.ru,
             benchmarkNameEn: detail.title ?? existing?.benchmarkNameEn ?? name.en,
             isArchived: detail.isArchived ?? false,
+            isPinned: detail.isPinned ?? false,
             startedAt: existing?.startedAt ?? detail.createdAt,
             updatedAt: detail.updatedAt,
             status,
@@ -174,6 +175,7 @@ export function useConversationRecovery({
                   benchmarkName: detail.title ?? dialogue.benchmarkName,
                   benchmarkNameEn: detail.title ?? dialogue.benchmarkNameEn,
                   isArchived: detail.isArchived ?? false,
+                  isPinned: detail.isPinned ?? false,
                   updatedAt: detail.updatedAt,
                 }
                 : dialogue,
@@ -195,6 +197,7 @@ export function useConversationRecovery({
               benchmarkName: detail.title ?? dialogue.benchmarkName,
               benchmarkNameEn: detail.title ?? dialogue.benchmarkNameEn,
               isArchived: detail.isArchived ?? false,
+              isPinned: detail.isPinned ?? false,
               status,
               updatedAt: detail.updatedAt,
             }

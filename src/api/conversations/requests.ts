@@ -24,7 +24,7 @@ export async function getConversation(id: string): Promise<ConversationDetailDto
 
 export async function updateConversation(
   id: string,
-  data: { title?: string; isArchived?: boolean },
+  data: { title?: string; isArchived?: boolean; isPinned?: boolean },
 ): Promise<ConversationDto> {
   const { data: result } = await httpClient.patch<ConversationDto>(
     BACKEND_PATHS.conversations.detail(id),

@@ -10,6 +10,7 @@ interface Props {
   onNewSession: () => void;
   onSelectDialogue: (id: string) => void;
   archivedIds: string[];
+  onTogglePin: (id: string) => void;
   deriveDisplayStatus: (dialogue: Dialogue) => DisplayStatus;
   mobileOpen: boolean;
   onToggleMobile: () => void;
@@ -22,6 +23,7 @@ export const Sidebar = ({
   onNewSession,
   onSelectDialogue,
   archivedIds,
+  onTogglePin,
   deriveDisplayStatus,
   mobileOpen,
   onToggleMobile,
@@ -31,8 +33,9 @@ export const Sidebar = ({
   const [archiveOpen, setArchiveOpen] = useState(false);
 
   const archivedIdSet = new Set(archivedIds);
-  const activeDialogues = dialogues.filter((dialogue) => !archivedIdSet.has(dialogue.id));
-  const archivedDialogues = dialogues.filter((dialogue) => archivedIdSet.has(dialogue.id));
+  const sortedDialogues = [...dialogues].sort((a, b) => Number(Boolean(b.isPinned)) - Number(Boolean(a.isPinned)));
+  const activeDialogues = sortedDialogues.filter((dialogue) => !archivedIdSet.has(dialogue.id));
+  const archivedDialogues = sortedDialogues.filter((dialogue) => archivedIdSet.has(dialogue.id));
 
   return (
     <aside
@@ -74,6 +77,7 @@ export const Sidebar = ({
               <DialogueListItem
                 key={dialogue.id}
                 dialogue={dialogue}
+                onTogglePin={() => onTogglePin(dialogue.id)}
                 displayStatus={deriveDisplayStatus(dialogue)}
                 isActive={dialogue.id === activeId}
                 onClick={() => {
@@ -94,6 +98,7 @@ export const Sidebar = ({
                   <DialogueListItem
                     key={dialogue.id}
                     dialogue={dialogue}
+                    onTogglePin={() => onTogglePin(dialogue.id)}
                     displayStatus={deriveDisplayStatus(dialogue)}
                     isActive={dialogue.id === activeId}
                     isArchived

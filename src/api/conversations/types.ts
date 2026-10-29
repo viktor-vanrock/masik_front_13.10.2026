@@ -68,6 +68,7 @@ export interface ConversationDto {
   intent?: 'find_existing' | 'create_new' | null;
   title?: string | null;
   isArchived?: boolean;
+  isPinned?: boolean;
   createdAt: string;
   updatedAt: string;
 }
