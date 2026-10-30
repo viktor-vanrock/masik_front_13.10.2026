@@ -19,7 +19,8 @@ export interface MessageDto {
   options: Array<{ id: string; label: string }> | {
     kind: 'recommendations';
     benchmarks: Array<{ testId: string; explanation?: string }>;
-  } | null;
+    resultKey?: never;
+  } | { kind?: 'result'; resultKey?: 'mock_draft_ready'; status?: string; testId?: string; benchmarks?: never } | null;
   createdAt: string;
 }
 

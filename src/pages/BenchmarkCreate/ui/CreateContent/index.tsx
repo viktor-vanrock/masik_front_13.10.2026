@@ -17,6 +17,7 @@ import { Sidebar } from '../Sidebar';
 import { RestoreModal } from '@ui/RestoreModal';
 import { buildDerivedRequest } from './utils/buildDerivedRequest';
 import { DemoGenerationLoader } from '../DemoGenerationLoader';
+import { ContactCollectionForm } from '@/components/contact/ContactCollectionForm';
 import type { DerivedMode, MockExample } from './types';
 import { readMockExamples, readMockReady } from './mock';
 
@@ -193,6 +194,7 @@ export const CreateContent = () => {
   const readableMessages = displayedMessages.filter((message) =>
     !readMockExamples(message.content) && !readMockReady(message.content) &&
     (!showMockProductionLoading || message.role !== 'assistant' || Date.parse(message.timestamp) <= mockProductionLoading.startedAt));
+  const mockDraftMessageId = readableMessages.findLast((message) => message.resultKey === 'mock_draft_ready')?.id;
 
   const generationPanel = <GenerationPanel
     key={`${activeId}:${generation?.jobId ?? ''}`}
@@ -275,15 +277,15 @@ export const CreateContent = () => {
             </p>
           )}
 
-          <div className="flex-1 overflow-y-auto px-4 pt-7 pb-3">
-            <div className="flex flex-col gap-6 pb-6 w-full max-w-[760px] mx-auto">
-              {showSourceStatus && <section className="rounded-[18px] border border-[#e9edf2] bg-white p-5 text-[#1e1e20]">
+          <div className="flex-1 overflow-y-auto px-4 pt-7 pb-3 dark:bg-[#10121b] dark:text-[#f2f3fc] scroll-smooth">
+            <div className="flex flex-col gap-6 dark:gap-[18px] pb-6 w-full max-w-[760px] mx-auto">
+              {showSourceStatus && <section className="rounded-[18px] border border-[#e9edf2] bg-white p-5 text-[#1e1e20] dark:border-[#acb3cf33] dark:bg-[#1d202f] dark:text-[#f2f3fc] [&_p]:dark:text-[#acb3cf]">
                 {sourceLoading ? <p className="text-[13px] text-[#686e78]">Загружаем исходный бенчмарк…</p>
                   : sourceError || !source ? <div><p className="text-[13px] text-[#686e78]">Не удалось загрузить исходный бенчмарк.</p><button type="button" onClick={() => { if (isSuiteSource) { void refetchSuite(); void refetchTests(); } else { if (detectBaseType) void refetchSuite(); void refetchTest(); } }} className="mt-3 cursor-pointer rounded-[30px] bg-[#515dad1a] px-4 py-2 text-[12px] text-[#515dad]">Повторить</button></div>
                     : <p className="text-[13px] text-[#686e78]">{connectionError ? 'Чат не открылся. Повторите подключение.' : 'Открываем новый чат…'}{connectionError && <button type="button" onClick={derivedEntry ? retryEntrySession : startNewSession} className="ml-2 cursor-pointer text-[#515dad] underline">Повторить</button>}</p>}
               </section>}
               {derivedEntry && sourceReady && activeId === entryConversationId && (
-                <div className="w-full self-start rounded-[20px] bg-[#f3f6fa] px-7 py-6 text-[13px] leading-[1.8] text-[#1e1e20]">
+                <div className="w-full self-start rounded-[20px] bg-[#f3f6fa] px-7 py-6 text-[13px] leading-[1.8] text-[#1e1e20] dark:border dark:border-[#acb3cf33] dark:bg-[#1d202f] dark:text-[#f2f3fc] [&_p]:dark:text-[#acb3cf]">
                   <p className="m-0 font-semibold">{derivedMode === 'russify'
                     ? `Что нужно изменить при адаптации бенчмарка «${source?.name}» на русский язык?`
                     : `Что нужно изменить в бенчмарке «${source?.name}»?`}</p>
@@ -291,8 +293,8 @@ export const CreateContent = () => {
                 </div>
               )}
               {readableMessages.map((msg) => (
+                <React.Fragment key={msg.id}>
                 <MessageBubble
-                  key={msg.id}
                   msg={msg}
                   benchmarks={allBenchmarks}
                   recommendationDisabled={isTyping || (
@@ -315,21 +317,25 @@ export const CreateContent = () => {
                     }
                     : undefined}
                 />
+                {msg.id === mockDraftMessageId && activeDialogue?.conversationId && (
+                  <ContactCollectionForm key={activeDialogue.conversationId} chatId={activeDialogue.conversationId} context="new-test" />
+                )}
+                </React.Fragment>
               ))}
               {showDemoLoading && <DemoGenerationLoader startedAt={demoLoading.startedAt} />}
-              {showMockExamples && !showDemoLoading && !showMockProductionLoading && !showGeneration && selectedMockExamples && latestMockExamplesMessage && <section className="w-full max-w-[88%] rounded-[20px] bg-[#f3f6fa] px-[22px] py-[18px] text-[#1e1e20] max-[600px]:max-w-full">
+              {showMockExamples && !showDemoLoading && !showMockProductionLoading && !showGeneration && selectedMockExamples && latestMockExamplesMessage && <section className="w-full max-w-[88%] rounded-[20px] bg-[#f3f6fa] px-[22px] py-[18px] text-[#1e1e20] dark:border dark:border-[#acb3cf33] dark:bg-[#1d202f] dark:text-[#f2f3fc] dark:[&_article]:border-[#acb3cf33] dark:[&_article]:bg-[#25283a] dark:[&_textarea]:border-[#acb3cf33] dark:[&_textarea]:bg-[#25283a] dark:[&_textarea]:text-[#f2f3fc] max-[600px]:max-w-full">
                 <h2 className="text-[20px] font-medium">Выберите примеры для продолжения</h2>
-                <p className="mt-2 text-[12px] leading-[1.6] text-[#686e78]">Снимите галочки с ненужных примеров. Чтобы получить другие варианты, просто напишите в чат, что изменить.</p>
+                <p className="mt-2 text-[12px] leading-[1.6] text-[#686e78] dark:text-[#acb3cf]">Снимите галочки с ненужных примеров. Чтобы получить другие варианты, просто напишите в чат, что изменить.</p>
                 <div className="mt-5 space-y-4">{selectedMockExamples.map((example, index) => <article key={index} className="rounded-[16px] border border-[#e9edf2] bg-white p-[22px]">
                   <div className="mb-5 flex items-center justify-between gap-3"><strong className="text-[13px] font-medium">Пример {index + 1}</strong><span className={`rounded-md px-2 py-1 text-[11px] ${example.accepted ? 'bg-[#e5f4ee] text-[#0c7055]' : 'bg-[#f3f6fa] text-[#686e78]'}`}>{example.accepted ? 'Выбран' : 'Не выбран'}</span></div>
                   <label className="mb-4 block text-[12px]">Задание<textarea value={example.input} onChange={(event) => setMockExampleSelection({ messageId: latestMockExamplesMessage.id, examples: selectedMockExamples.map((item, itemIndex) => itemIndex === index ? { ...item, input: event.target.value } : item) })} className="mt-2 min-h-24 w-full rounded-[10px] border border-[#d1d7de] bg-white p-3 text-[12px] leading-[1.8] outline-none focus:border-[#515dad]" /></label>
                   <label className="block text-[12px]">Эталонный ответ<textarea value={example.expectedOutput} onChange={(event) => setMockExampleSelection({ messageId: latestMockExamplesMessage.id, examples: selectedMockExamples.map((item, itemIndex) => itemIndex === index ? { ...item, expectedOutput: event.target.value } : item) })} className="mt-2 min-h-20 w-full rounded-[10px] border border-[#d1d7de] bg-white p-3 text-[12px] leading-[1.8] outline-none focus:border-[#515dad]" /></label>
-                  <label className="mt-4 flex cursor-pointer items-center gap-2 text-[11px] text-[#686e78]"><input type="checkbox" checked={example.accepted} onChange={(event) => setMockExampleSelection({ messageId: latestMockExamplesMessage.id, examples: selectedMockExamples.map((item, itemIndex) => itemIndex === index ? { ...item, accepted: event.target.checked } : item) })} className="h-[15px] w-[15px] shrink-0 cursor-pointer accent-[#515dad]" />Включить этот пример в набор</label>
+                  <label className="mt-4 flex cursor-pointer items-center gap-2 text-[11px] text-[#686e78] dark:text-[#acb3cf]"><input type="checkbox" checked={example.accepted} onChange={(event) => setMockExampleSelection({ messageId: latestMockExamplesMessage.id, examples: selectedMockExamples.map((item, itemIndex) => itemIndex === index ? { ...item, accepted: event.target.checked } : item) })} className="h-[15px] w-[15px] shrink-0 cursor-pointer accent-[#515dad]" />Включить этот пример в набор</label>
                 </article>)}</div>
-                <div className="mt-6 flex flex-col items-start gap-3"><span className="text-[11px] text-[#686e78]">Выбрано: {chosenMockExamples.length} из {selectedMockExamples.length}</span><button type="button" disabled={!mockExamplesValid || isTyping} onClick={() => { if (!activeId) return; void sendMessage(`Масштабировать выбранные примеры: ${JSON.stringify(chosenMockExamples)}`); setMockProductionLoading({ conversationId: activeId, startedAt: Date.now() }); }} className="inline-flex items-center gap-2 rounded-[30px] border border-transparent bg-[#515dad] px-5 py-3 text-[12px] font-medium text-white transition hover:bg-[#465195] disabled:cursor-not-allowed disabled:opacity-50">Масштабировать выбранные ({chosenMockExamples.length})<svg aria-hidden="true" viewBox="0 0 18 18" className="h-[18px] w-[18px] shrink-0 fill-none stroke-current stroke-[1.7] [stroke-linecap:round] [stroke-linejoin:round]"><path d="m3 9 4 4 8-9" /></svg></button>{chosenMockExamples.length > 0 && !mockExamplesValid && <p className="text-[11px] text-[#ac3636]">Заполните задания и эталонные ответы; задания не должны повторяться.</p>}</div>
+                <div className="mt-6 flex flex-col items-start gap-3"><span className="text-[11px] text-[#686e78] dark:text-[#acb3cf]">Выбрано: {chosenMockExamples.length} из {selectedMockExamples.length}</span><button type="button" disabled={!mockExamplesValid || isTyping} onClick={() => { if (!activeId) return; void sendMessage(`Масштабировать выбранные примеры: ${JSON.stringify(chosenMockExamples)}`); setMockProductionLoading({ conversationId: activeId, startedAt: Date.now() }); }} className="inline-flex items-center gap-2 rounded-[30px] border border-transparent bg-[#515dad] px-5 py-3 text-[12px] font-medium text-white transition hover:bg-[#465195] disabled:cursor-not-allowed disabled:opacity-50">Масштабировать выбранные ({chosenMockExamples.length})<svg aria-hidden="true" viewBox="0 0 18 18" className="h-[18px] w-[18px] shrink-0 fill-none stroke-current stroke-[1.7] [stroke-linecap:round] [stroke-linejoin:round]"><path d="m3 9 4 4 8-9" /></svg></button>{chosenMockExamples.length > 0 && !mockExamplesValid && <p className="text-[11px] text-[#ac3636] dark:text-[#ff91a0]">Заполните задания и эталонные ответы; задания не должны повторяться.</p>}</div>
               </section>}
               {showMockProductionLoading && <DemoGenerationLoader startedAt={mockProductionLoading.startedAt} producing />}
-              {derivedEntry && mockReady && !showMockProductionLoading && <section className="w-full max-w-[88%] rounded-[20px] bg-[#f3f6fa] px-[22px] py-[18px] text-[#1e1e20] max-[600px]:max-w-full">
+              {derivedEntry && mockReady && !showMockProductionLoading && <section className="w-full max-w-[88%] rounded-[20px] bg-[#f3f6fa] px-[22px] py-[18px] text-[#1e1e20] dark:border dark:border-[#acb3cf33] dark:bg-[#1d202f] dark:text-[#f2f3fc] dark:[&_article]:border-[#acb3cf33] dark:[&_article]:bg-[#25283a] max-[600px]:max-w-full">
                 <h2 className="text-[22px] font-medium">Ваш набор готов</h2>
                 <p className="mt-3 text-[13px] leading-[1.7]">«{mockReady.name}» создан на основе {mockReady.examples.length} {mockReady.examples.length === 1 ? 'выбранного примера' : 'выбранных примеров'} и добавлен в общий каталог.</p>
                 <div className="mt-6 flex flex-wrap gap-3"><button type="button" onClick={() => {
@@ -338,7 +344,7 @@ export const CreateContent = () => {
                   const link = document.createElement('a'); link.href = url; link.download = `${mockReady.name}.json`; link.click();
                   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
                 }} className="inline-flex items-center gap-2 rounded-[30px] border border-transparent bg-[#515dad] px-5 py-3 text-[13px] text-white hover:bg-[#465195]">Скачать<svg aria-hidden="true" viewBox="0 0 18 18" className="h-[18px] w-[18px] fill-none stroke-current stroke-[1.7] [stroke-linecap:round] [stroke-linejoin:round]"><path d="M9 2v9m-4-4 4 4 4-4M3 12v3h12v-3" /></svg></button><button type="button" onClick={() => setMockReadyPreviewOpen((open) => !open)} className="inline-flex items-center gap-2 rounded-[30px] border border-transparent bg-[#515dad1a] px-5 py-3 text-[13px] text-[#515dad] shadow-none hover:bg-[#515dad26]">Посмотреть<svg aria-hidden="true" viewBox="0 0 18 18" className="h-[18px] w-[18px] fill-none stroke-current stroke-[1.7] [stroke-linecap:round] [stroke-linejoin:round]"><path d="M4 9h10m-4-4 4 4-4 4" /></svg></button></div>
-                {mockReadyPreviewOpen && <div className="mt-6 space-y-3 border-t border-[#e9edf2] pt-5"><h3 className="text-[16px] font-medium">Примеры набора</h3>{mockReady.examples.map((example, index) => <article key={index} className="rounded-[12px] border border-[#e9edf2] bg-white p-4 text-[12px]"><strong>Пример {index + 1}</strong><p className="mt-2 whitespace-pre-wrap">{example.input}</p><p className="mt-3 whitespace-pre-wrap text-[#686e78]">Эталонный ответ: {example.expectedOutput}</p></article>)}</div>}
+                {mockReadyPreviewOpen && <div className="mt-6 space-y-3 border-t border-[#e9edf2] pt-5"><h3 className="text-[16px] font-medium">Примеры набора</h3>{mockReady.examples.map((example, index) => <article key={index} className="rounded-[12px] border border-[#e9edf2] bg-white p-4 text-[12px]"><strong>Пример {index + 1}</strong><p className="mt-2 whitespace-pre-wrap">{example.input}</p><p className="mt-3 whitespace-pre-wrap text-[#686e78] dark:text-[#acb3cf]">Эталонный ответ: {example.expectedOutput}</p></article>)}</div>}
               </section>}
               {isTyping && !showDemoLoading && !showMockProductionLoading && <TypingIndicator />}
               {showGeneration && (generation?.status === 'succeeded' ? (
@@ -354,8 +360,7 @@ export const CreateContent = () => {
           </div>
 
           <div
-            className="w-full px-4 py-3 flex-shrink-0"
-            style={{ backgroundColor: 'var(--bg-page)' }}
+            className="w-full px-4 py-3 flex-shrink-0 bg-[var(--bg-page)] dark:bg-[#10121b] dark:text-[#f2f3fc]"
           >
             {showGeneration && (
               <p className="py-3 text-center text-sm" style={{ color: 'var(--text-muted)' }}>

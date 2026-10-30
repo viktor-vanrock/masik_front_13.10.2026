@@ -53,6 +53,7 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  resultKey?: 'mock_draft_ready';
   timestamp: string;
   recommendations?: string[];
   recommendationItems?: Array<{

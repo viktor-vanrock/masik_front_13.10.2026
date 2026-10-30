@@ -342,6 +342,24 @@ describe('mapDetailToMessages', () => {
     });
     expect(restoredMessages[0]).not.toHaveProperty('recommendations');
   });
+
+  it('restores the mock draft marker from persisted result metadata', () => {
+    const payload = {
+      type: 'result' as const,
+      isFinal: true,
+      id: '55555555-5555-4555-8555-555555555555',
+      content: { kind: 'result' as const, label: 'Черновик нового бенчмарка сформирован (mock)',
+        status: 'done' as const, resultKey: 'mock_draft_ready' as const },
+    };
+    expect(mapAgentPayloadToMessage(payload).resultKey).toBe('mock_draft_ready');
+    const restored = mapDetailToMessages({
+      ...baseConversation,
+      intent: 'create_new',
+      messages: [{ id: payload.id, role: 'agent', kind: 'result', content: payload.content.label,
+        options: { resultKey: 'mock_draft_ready', status: 'done' }, createdAt: '2026-08-17T09:00:03.000Z' }],
+    }, labels);
+    expect(restored[0].resultKey).toBe('mock_draft_ready');
+  });
 });
 
 describe('live recommendation actions', () => {

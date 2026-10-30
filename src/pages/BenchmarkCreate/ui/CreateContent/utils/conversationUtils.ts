@@ -160,7 +160,7 @@ export function mapAgentPayloadToMessage(
   }
 
   if (payload.type === 'result') {
-    return createAssistantMessage(payload.content.label, {}, payload.id);
+    return createAssistantMessage(payload.content.label, { resultKey: payload.content.resultKey }, payload.id);
   }
 
   if (payload.type === 'hypotheses') {
@@ -219,6 +219,9 @@ export function mapDetailToMessages(
       }
 
       const base: ChatMessage = { id, role, content, timestamp: m.createdAt };
+      if (m.kind === 'result' && m.role === 'agent' && m.options && !Array.isArray(m.options)) {
+        base.resultKey = m.options.resultKey;
+      }
       if (m.kind === 'question' && Array.isArray(m.options)) {
         base.agentOptions = m.options.map((o, i) => ({ ...o, id: o.id || `opt-${idx}-${i}` }));
       }

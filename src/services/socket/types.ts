@@ -31,6 +31,7 @@ export interface AgentTextContent {
 export interface AgentResultContent {
   kind: 'result';
   label: string;
+  resultKey?: 'mock_draft_ready';
   testId?: string;
   status: 'finished' | 'done' | 'generating';
   generationJobId?: string;

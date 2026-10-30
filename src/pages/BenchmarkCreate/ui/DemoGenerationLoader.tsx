@@ -14,15 +14,15 @@ export function DemoGenerationLoader({ startedAt, producing = false }: { started
     : elapsed < 1 ? 'Разбираем требования'
       : elapsed < 2 ? 'Составляем задания' : 'Подготавливаем варианты для проверки';
 
-  return <section className="w-full max-w-[88%] rounded-[20px] bg-[#f3f6fa] px-[22px] py-[18px] text-[#1e1e20] max-[600px]:max-w-full" role="status" aria-live="polite">
+  return <section className="w-full max-w-[88%] rounded-[20px] bg-[#f3f6fa] px-[22px] py-[18px] text-[#1e1e20] dark:border dark:border-[#acb3cf33] dark:bg-[#1d202f] dark:text-[#f2f3fc] max-[600px]:max-w-full" role="status" aria-live="polite">
     <div className="py-2">
       <h2 className="mb-[14px] text-[23px] font-medium leading-[1.4] max-[600px]:text-[20px]">{producing ? 'Масштабируем выбранные примеры' : 'Генерируем промежуточные варианты'}</h2>
-      <p className="text-[13px] leading-[1.6] text-[#686e78]">Можно перейти в личный кабинет. Статус и результат сохранятся в этом чате.</p>
-      <div className="my-[24px] mb-[14px] h-[6px] overflow-hidden rounded-[8px] bg-[#e9edf2]" role="progressbar" aria-label="Обработка заявки">
-        <span className="benchmark-demo-progress block h-full w-[30%] rounded-[8px] bg-[#515dad]" />
+      <p className="text-[13px] leading-[1.6] text-[#686e78] dark:text-[#acb3cf]">Можно перейти в личный кабинет. Статус и результат сохранятся в этом чате.</p>
+      <div className="my-[24px] mb-[14px] h-[6px] overflow-hidden rounded-[8px] bg-[#e9edf2] dark:bg-[#25283a]" role="progressbar" aria-label="Обработка заявки">
+        <span className="benchmark-demo-progress block h-full w-[30%] rounded-[8px] bg-[#515dad] dark:bg-[#5865c9]" />
       </div>
-      <div className="flex justify-between gap-5 text-[10px] tabular-nums text-[#686e78] max-[600px]:text-[12px]"><span>{stage}</span><span>Прошло <b className="font-normal">{elapsed} с</b></span></div>
-      <small className="mt-5 block text-[11px] text-[#3a427b] max-[600px]:text-[12px]">Следующий этап: {producing ? 'готовый набор в общем каталоге' : 'ваш выбор примеров'}</small>
+      <div className="flex justify-between gap-5 text-[10px] tabular-nums text-[#686e78] dark:text-[#acb3cf] max-[600px]:text-[12px]"><span>{stage}</span><span>Прошло <b className="font-normal">{elapsed} с</b></span></div>
+      <small className="mt-5 block text-[11px] text-[#3a427b] dark:text-[#afb8ff] max-[600px]:text-[12px]">Следующий этап: {producing ? 'готовый набор в общем каталоге' : 'ваш выбор примеров'}</small>
     </div>
   </section>;
 }
