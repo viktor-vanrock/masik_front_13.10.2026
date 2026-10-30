@@ -256,6 +256,8 @@ export const translations = {
       sessionErrorText: 'Проблема соединения с сервером. Попробуйте ещё раз.',
       retry: 'Повторить',
       logoutErrorFallback: 'Не удалось выйти. Попробуйте ещё раз.',
+      emailAlreadyExists: 'Пользователь с таким адресом электронной почты уже существует.',
+      usernameAlreadyExists: 'Пользователь с таким именем уже существует.',
       /**
        * Локализованные сообщения валидации auth-форм.
        *
@@ -412,6 +414,9 @@ export const translations = {
     create: {
       title: 'Рекомендация бенчмарка',
       newChat: 'Новый чат',
+      pinChat: 'Закрепить чат',
+      unpinChat: 'Открепить чат',
+      loadingChats: 'Загрузка чатов…',
       myDialogues: 'Мои сессии',
       placeholder: 'Введите сообщение...',
       send: 'Отправить',
@@ -1174,6 +1179,8 @@ export const translations = {
       sessionErrorText: 'Problem connecting to the server. Please try again.',
       retry: 'Retry',
       logoutErrorFallback: 'Sign out failed. Please try again.',
+      emailAlreadyExists: 'An account with this email already exists.',
+      usernameAlreadyExists: 'An account with this username already exists.',
       errors: {
         usernameRequired: 'Please enter a username',
         usernameTooLong: 'Maximum 64 characters',
@@ -1311,6 +1318,9 @@ export const translations = {
     create: {
       title: 'Benchmark recommendation',
       newChat: 'New Chat',
+      pinChat: 'Pin chat',
+      unpinChat: 'Unpin chat',
+      loadingChats: 'Loading chats…',
       myDialogues: 'My Sessions',
       placeholder: 'Type a message...',
       send: 'Send',

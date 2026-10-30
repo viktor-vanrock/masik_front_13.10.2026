@@ -79,6 +79,8 @@ export const BACKEND_PATHS = {
   },
   conversations: {
     list: '/conversations',
+    sidebar: '/conversations/sidebar',
+    archive: '/conversations/sidebar/archive',
     detail: (id: string) => `/conversations/${encodeURIComponent(id)}`,
     generation: (id: string) => `/conversations/${encodeURIComponent(id)}/generation`,
     retryGeneration: (id: string) => `/conversations/${encodeURIComponent(id)}/generation/retry`,

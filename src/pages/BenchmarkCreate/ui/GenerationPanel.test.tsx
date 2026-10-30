@@ -155,6 +155,29 @@ describe('GenerationPanel', () => {
     expect(screen.getByRole('button', { name: 'Масштабировать' })).toBeDisabled();
   });
 
+  it('keeps generation feedback outside task cards and preserves selection until the job changes', () => {
+    const generation = { ...base, status: 'succeeded' as const, examples: [
+      { input: 'Question one', output: 'Answer one' },
+      { input: 'Question two', output: 'Answer two' },
+    ] };
+    const { rerender } = render(<GenerationPanel {...props} generation={generation} />);
+
+    const feedback = screen.getAllByRole('status').find((element) =>
+      element.textContent?.includes('Задания созданы'))!;
+    const tasks = screen.getAllByRole('article');
+    expect(feedback).toHaveTextContent('Задания созданы (2)');
+    expect(tasks).toHaveLength(2);
+    expect(tasks.every((task) => !task.contains(feedback))).toBe(true);
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Выбрать задание 1' }));
+    expect(screen.getByRole('checkbox', { name: 'Выбрать задание 1' })).not.toBeChecked();
+    rerender(<GenerationPanel {...props} generation={{ ...generation }} />);
+    expect(screen.getByRole('checkbox', { name: 'Выбрать задание 1' })).not.toBeChecked();
+
+    rerender(<GenerationPanel {...props} generation={{ ...generation, jobId: 'job-2' }} />);
+    expect(screen.getByRole('checkbox', { name: 'Выбрать задание 1' })).toBeChecked();
+  });
+
   it('allows a failed production job to retry with a changed selection and count', () => {
     const onStartProduction = vi.fn();
     const generation = { ...base, status: 'succeeded' as const, examples: [{ input: 'One' }, { input: 'Two' }] };

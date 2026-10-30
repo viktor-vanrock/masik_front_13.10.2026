@@ -4,6 +4,8 @@ import type {
   ConversationDto,
   ConversationDetailDto,
   ConversationsListRaw,
+  ConversationSidebarPage,
+  ArchivedConversationsPage,
   ConversationGenerationDto,
   ConversationProductionDto,
 } from './types';
@@ -15,6 +17,22 @@ export async function listConversations(): Promise<ConversationDto[]> {
   return Array.isArray(data) ? data : data.data;
 }
 
+export async function listSidebarConversations(page: number): Promise<ConversationSidebarPage> {
+  const { data } = await httpClient.get<ConversationSidebarPage>(
+    BACKEND_PATHS.conversations.sidebar,
+    { params: { page } },
+  );
+  return data;
+}
+
+export async function listArchivedConversations(page: number): Promise<ArchivedConversationsPage> {
+  const { data } = await httpClient.get<ArchivedConversationsPage>(
+    BACKEND_PATHS.conversations.archive,
+    { params: { page } },
+  );
+  return data;
+}
+
 export async function getConversation(id: string): Promise<ConversationDetailDto> {
   const { data } = await httpClient.get<ConversationDetailDto>(
     BACKEND_PATHS.conversations.detail(id),
@@ -24,7 +42,7 @@ export async function getConversation(id: string): Promise<ConversationDetailDto
 
 export async function updateConversation(
   id: string,
-  data: { title?: string; isArchived?: boolean },
+  data: { title?: string; isArchived?: boolean; isPinned?: boolean },
 ): Promise<ConversationDto> {
   const { data: result } = await httpClient.patch<ConversationDto>(
     BACKEND_PATHS.conversations.detail(id),

@@ -20,6 +20,7 @@ interface Props {
   onStartProduction: (numTasks: number, creatorJobId: string, selectedIndices: number[]) => void;
   isStartingProduction: boolean;
   startProductionError: boolean;
+  hideSuccessStatus?: boolean;
 }
 
 function text(value: unknown): string {
@@ -65,7 +66,7 @@ function downloadProduction(examples: Array<Record<string, unknown>>) {
 
 export function GenerationPanel({ generation, loadError, retryError, isRetrying, onRetry, onRefresh,
   onCancel, isCancelling, cancelError, production, productionLoading, productionError,
-  onProductionRefresh, onStartProduction, isStartingProduction, startProductionError }: Props) {
+  onProductionRefresh, onStartProduction, isStartingProduction, startProductionError, hideSuccessStatus = false }: Props) {
   const { t } = useApp();
   const labels = t.create.generation;
   const failed = generation?.status === 'failed';
@@ -129,13 +130,13 @@ export function GenerationPanel({ generation, loadError, retryError, isRetrying,
   const preview = production?.examples.slice(0, 10) ?? [];
 
   return (
-    <section className="ml-11 rounded-2xl p-4 space-y-4" aria-label={title}
-      style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}>
-      <div role="status" aria-live="polite" className="flex items-center gap-2 font-medium">
+    <section className={hideSuccessStatus ? 'p-4 space-y-4' : 'ml-11 rounded-2xl p-4 space-y-4'} aria-label={title}
+      style={{ backgroundColor: 'var(--bg-card)', border: hideSuccessStatus ? 'none' : '1px solid var(--border)', color: 'var(--text-primary)' }}>
+      {!(succeeded && hideSuccessStatus) && <div role="status" aria-live="polite" className="flex items-center gap-2 font-medium">
         {cancelled ? <Ban size={18} /> : failed ? <AlertCircle size={18} />
           : succeeded ? <CheckCircle2 size={18} /> : <Loader2 size={18} className="animate-spin" />}
         {title}{succeeded && ` (${generation.examples.length})`}
-      </div>
+      </div>}
       {!failed && !succeeded && !cancelled && (
         <div className="space-y-2 text-sm" style={{ color: 'var(--text-muted)' }}>
           <p>{labels.waiting}</p>

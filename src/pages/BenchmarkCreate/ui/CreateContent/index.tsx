@@ -98,7 +98,9 @@ export const CreateContent = () => {
 
   const {
     dialogues, activeId, activeDialogue, entryConversationId, isTyping, connectionError, startNewSession, retryEntrySession,
-    startDerivedCreation, renameDialogue, toggleArchive, sendMessage, acceptRecommendation, rejectRecommendation, generation,
+    loadMoreDialogues, hasMoreDialogues, isLoadingMoreDialogues,
+    loadMoreArchived, hasMoreArchived, isLoadingMoreArchived, archivedTotal,
+    startDerivedCreation, renameDialogue, toggleArchive, togglePin, sendMessage, acceptRecommendation, rejectRecommendation, generation,
     generationError, retryGeneration, refreshGeneration, isRetryingGeneration, retryGenerationError, cancelGeneration,
     isCancellingGeneration, cancelGenerationError, production, productionLoading, productionError, refreshProduction,
     startProduction, isStartingProduction, startProductionError,
@@ -108,8 +110,6 @@ export const CreateContent = () => {
     entryTitle,
     derivedIntent: entryDerivedIntent,
   });
-
-  const archivedDialogueIds = dialogues.filter((dialogue) => dialogue.isArchived).map((dialogue) => dialogue.id);
 
   useEffect(() => { resetPublish(); }, [activeId, resetPublish]);
 
@@ -194,6 +194,27 @@ export const CreateContent = () => {
     !readMockExamples(message.content) && !readMockReady(message.content) &&
     (!showMockProductionLoading || message.role !== 'assistant' || Date.parse(message.timestamp) <= mockProductionLoading.startedAt));
 
+  const generationPanel = <GenerationPanel
+    key={`${activeId}:${generation?.jobId ?? ''}`}
+    generation={generation}
+    loadError={generationError}
+    retryError={retryGenerationError}
+    isRetrying={isRetryingGeneration}
+    onRetry={retryGeneration}
+    onRefresh={refreshGeneration}
+    onCancel={cancelGeneration}
+    isCancelling={isCancellingGeneration}
+    cancelError={cancelGenerationError}
+    production={production}
+    productionLoading={productionLoading}
+    productionError={productionError}
+    onProductionRefresh={refreshProduction}
+    onStartProduction={startProduction}
+    isStartingProduction={isStartingProduction}
+    startProductionError={startProductionError}
+    hideSuccessStatus={generation?.status === 'succeeded'}
+  />;
+
   return (
     <>
       <div
@@ -205,6 +226,13 @@ export const CreateContent = () => {
       >
         <Sidebar
           dialogues={dialogues}
+          onLoadMore={() => loadMoreDialogues({ cancelRefetch: false })}
+          hasMore={hasMoreDialogues}
+          isLoadingMore={isLoadingMoreDialogues}
+          onLoadMoreArchived={() => loadMoreArchived({ cancelRefetch: false })}
+          hasMoreArchived={hasMoreArchived}
+          isLoadingMoreArchived={isLoadingMoreArchived}
+          archivedTotal={archivedTotal}
           activeId={activeId}
           onNewSession={() => { startNewSession(); if (derivedEntry) navigate('/create', { replace: true }); setMobileSidebarOpen(false); }}
           onSelectDialogue={(id) => {
@@ -217,7 +245,7 @@ export const CreateContent = () => {
             }
             navigate(`/create?${next.toString()}`, { replace: true });
           }}
-          archivedIds={archivedDialogueIds}
+          onTogglePin={togglePin}
           deriveDisplayStatus={(d) => deriveDisplayStatus(
             d,
             d.id === activeId ? generation : undefined,
@@ -313,25 +341,14 @@ export const CreateContent = () => {
                 {mockReadyPreviewOpen && <div className="mt-6 space-y-3 border-t border-[#e9edf2] pt-5"><h3 className="text-[16px] font-medium">Примеры набора</h3>{mockReady.examples.map((example, index) => <article key={index} className="rounded-[12px] border border-[#e9edf2] bg-white p-4 text-[12px]"><strong>Пример {index + 1}</strong><p className="mt-2 whitespace-pre-wrap">{example.input}</p><p className="mt-3 whitespace-pre-wrap text-[#686e78]">Эталонный ответ: {example.expectedOutput}</p></article>)}</div>}
               </section>}
               {isTyping && !showDemoLoading && !showMockProductionLoading && <TypingIndicator />}
-              {showGeneration && <GenerationPanel
-                key={activeId}
-                generation={generation}
-                loadError={generationError}
-                retryError={retryGenerationError}
-                isRetrying={isRetryingGeneration}
-                onRetry={retryGeneration}
-                onRefresh={refreshGeneration}
-                onCancel={cancelGeneration}
-                isCancelling={isCancellingGeneration}
-                cancelError={cancelGenerationError}
-                production={production}
-                productionLoading={productionLoading}
-                productionError={productionError}
-                onProductionRefresh={refreshProduction}
-                onStartProduction={startProduction}
-                isStartingProduction={isStartingProduction}
-                startProductionError={startProductionError}
-              />}
+              {showGeneration && (generation?.status === 'succeeded' ? (
+                <details key={`${activeId}:${generation.jobId ?? ''}`} className="ml-11 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
+                  <summary className="cursor-pointer px-4 py-3 font-medium text-[var(--text-primary)]">
+                    {t.create.generation.succeeded} ({generation.examples.length})
+                  </summary>
+                  {generationPanel}
+                </details>
+              ) : generationPanel)}
               <div ref={bottomRef} />
             </div>
           </div>

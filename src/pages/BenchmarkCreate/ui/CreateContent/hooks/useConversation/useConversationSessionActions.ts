@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { CONVERSATIONS_QUERY_KEYS, getConversation, updateConversation } from '@/api/conversations';
 import { getQueryClient } from '@/services/query';
 import { ApiException } from '@/services/http';
@@ -35,6 +35,7 @@ type Options = {
 };
 
 export function useConversationSessionActions(options: Options) {
+  const pendingPins = useRef(new Set<string>());
   const {
     dialogues, socketDialogues, getConversationId, userId, status, refs, setters,
     historyLabelsRef, removeSessionParam, location, navigate, entryIntentKey,
@@ -56,9 +57,9 @@ export function useConversationSessionActions(options: Options) {
       const selectionRequest = ++selectionRequestRef.current;
       const inSocket = socketDialogues.find((x) => x.id === id);
       const convId = inSocket?.conversationId ?? getConversationId(id);
-      // Local mock dialogues (Create phase, id = dlg-*) have no conversationId → skip socket.
+      // A local draft can be selected without a server conversation.
       if (!convId) {
-        setActiveId(id);
+        if (dialogues.some((dialogue) => dialogue.id === id && !dialogue.conversationId)) setActiveId(id);
         return;
       }
 
@@ -99,6 +100,7 @@ export function useConversationSessionActions(options: Options) {
               benchmarkName: detail.title ?? existing?.benchmarkName ?? name.ru,
               benchmarkNameEn: detail.title ?? existing?.benchmarkNameEn ?? name.en,
               isArchived: detail.isArchived ?? false,
+              pinnedDate: detail.pinnedDate ?? null,
               startedAt: detail.createdAt,
               updatedAt: detail.updatedAt,
               status: dialogueStatus,
@@ -127,7 +129,7 @@ export function useConversationSessionActions(options: Options) {
       })();
     },
     [
-      socketDialogues, getConversationId, setActiveId, removeSessionParam, userId,
+      socketDialogues, dialogues, getConversationId, setActiveId, removeSessionParam, userId,
       historyLabelsRef, restoreRequestRef, selectionRequestRef, setIsTyping,
       setPendingSearchConversationId, setSocketDialogues, socketRef,
     ],
@@ -246,7 +248,32 @@ export function useConversationSessionActions(options: Options) {
     }
   }, [dialogues, setSocketDialogues]);
 
+  const togglePin = useCallback(async (id: string) => {
+    const target = dialogues.find((dialogue) => dialogue.id === id);
+    if (!target?.conversationId || pendingPins.current.has(id)) return;
+    pendingPins.current.add(id);
+    const next = !target.pinnedDate;
+    const optimisticPinnedDate = next ? new Date().toISOString() : null;
+    setSocketDialogues((previous) => previous.some((dialogue) => dialogue.id === id)
+      ? previous.map((dialogue) => dialogue.id === id ? { ...dialogue, pinnedDate: optimisticPinnedDate } : dialogue)
+      : [{ ...target, pinnedDate: optimisticPinnedDate }, ...previous]);
+    try {
+      const updated = await updateConversation(target.conversationId, { isPinned: next });
+      setSocketDialogues((previous) => previous.map((dialogue) => dialogue.id === id
+        ? { ...dialogue, pinnedDate: updated.pinnedDate ?? null, updatedAt: updated.updatedAt }
+        : dialogue));
+      void getQueryClient()?.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEYS.lists() });
+    } catch {
+      setSocketDialogues((previous) => previous.map((dialogue) =>
+        dialogue.id === id ? { ...dialogue, pinnedDate: target.pinnedDate ?? null, updatedAt: target.updatedAt } : dialogue));
+      setConnectionError('Не удалось изменить закрепление чата. Повторите попытку.');
+    } finally {
+      pendingPins.current.delete(id);
+    }
+  }, [dialogues, setSocketDialogues, setConnectionError]);
+
   return {
+    togglePin,
     selectDialogue,
     startNewSession,
     retryEntrySession: startEntrySession,

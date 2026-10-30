@@ -33,7 +33,8 @@ vi.mock('@/services/socket', async (importOriginal) => ({
 }));
 vi.mock('@/api/conversations', async (importOriginal) => ({
   ...await importOriginal<typeof import('@/api/conversations')>(),
-  useConversationsQuery: () => ({ data: [] }),
+  useSidebarConversationsQuery: () => ({ data: { pages: [{ pinned: [], data: [], total: 0, archived: [] }] }, fetchNextPage: vi.fn(), hasNextPage: false, isFetchingNextPage: false }),
+  useArchivedConversationsQuery: () => ({ data: { pages: [{ data: [], total: 0, pageSize: 20, hasNextPage: false }] }, fetchNextPage: vi.fn(), hasNextPage: false, isFetchingNextPage: false }),
   getConversation: harness.getConversation,
 }));
 vi.mock('@/services/query', () => ({ getQueryClient: () => undefined }));

@@ -1,3 +1,4 @@
+import { Pin } from 'lucide-react';
 import type { Dialogue } from "@/types";
 import { DISPLAY_STATUS_CONFIG } from "../../consts";
 import type { DisplayStatus } from "@/types";
@@ -8,6 +9,7 @@ interface Props {
   displayStatus: DisplayStatus;
   isActive: boolean;
   onClick: () => void;
+  onTogglePin: () => void;
   isArchived?: boolean;
 }
 
@@ -16,10 +18,12 @@ export const DialogueListItem = ({
   displayStatus,
   isActive,
   onClick,
+  onTogglePin,
   isArchived = false,
 }: Props) => {
   const cfg = DISPLAY_STATUS_CONFIG[displayStatus];
-  const { lang } = useApp();
+  const { lang, t } = useApp();
+  const pinLabel = d.pinnedDate ? t.create.unpinChat : t.create.pinChat;
   const statusColors = cfg.tone === 'green'
     ? { backgroundColor: '#e5f4ee', color: '#0c7055' }
     : cfg.tone === 'brand'
@@ -31,7 +35,7 @@ export const DialogueListItem = ({
   return (
     <div
       className={[
-        'relative flex items-start gap-1 border rounded-xl transition-colors duration-150',
+        'group relative flex items-start gap-1 border rounded-xl transition-colors duration-150',
         isActive ? 'border-[#afb4d9] bg-[#eeeff7]' : 'border-transparent hover:bg-[#f3f6fa]',
         isArchived ? 'bg-[#fcfcfd]' : '',
       ].join(' ')}
@@ -52,6 +56,17 @@ export const DialogueListItem = ({
         </span>
         <small className="block mt-2 text-xs text-[#686e78]">{date}</small>
       </button>
+      {d.conversationId && <button
+        type="button"
+        onClick={onTogglePin}
+        aria-label={pinLabel}
+        title={pinLabel}
+        aria-pressed={Boolean(d.pinnedDate)}
+        className={[
+          'm-2 p-1.5 rounded-md border-0 bg-transparent text-[#515dad] cursor-pointer hover:bg-[#eeeff7]',
+          d.pinnedDate ? '' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100',
+        ].join(' ')}
+      ><Pin size={16} fill={d.pinnedDate ? 'currentColor' : 'none'} /></button>}
     </div>
   );
 };

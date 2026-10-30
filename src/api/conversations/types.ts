@@ -68,6 +68,7 @@ export interface ConversationDto {
   intent?: 'find_existing' | 'create_new' | null;
   title?: string | null;
   isArchived?: boolean;
+  pinnedDate?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -88,6 +89,22 @@ export interface ConversationDetailDto extends ConversationDto {
 export type ConversationsListRaw =
   | ConversationDto[]
   | { data: ConversationDto[]; total: number; page?: number; limit?: number };
+
+export interface ConversationSidebarPage {
+  /** Pinned list is returned on the first page only. */
+  pinned: ConversationDto[];
+  data: ConversationDto[];
+  total: number;
+  pageSize: number;
+  hasNextPage: boolean;
+}
+
+export interface ArchivedConversationsPage {
+  data: ConversationDto[];
+  total: number;
+  pageSize: number;
+  hasNextPage: boolean;
+}
 
 export interface ConversationGenerationDto {
   jobId: string | null;
