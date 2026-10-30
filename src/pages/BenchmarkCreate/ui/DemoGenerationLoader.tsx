@@ -14,7 +14,7 @@ export function DemoGenerationLoader({ startedAt, producing = false }: { started
     : elapsed < 1 ? 'Разбираем требования'
       : elapsed < 2 ? 'Составляем задания' : 'Подготавливаем варианты для проверки';
 
-  return <section className="w-full max-w-[88%] rounded-[20px] bg-[#f3f6fa] px-[22px] py-[18px] text-[#1e1e20] max-[600px]:max-w-full" role="status" aria-live="polite">
+  return <section className="benchmark-chat-card w-full max-w-[88%] rounded-[20px] bg-[#f3f6fa] px-[22px] py-[18px] text-[#1e1e20] max-[600px]:max-w-full" role="status" aria-live="polite">
     <div className="py-2">
       <h2 className="mb-[14px] text-[23px] font-medium leading-[1.4] max-[600px]:text-[20px]">{producing ? 'Масштабируем выбранные примеры' : 'Генерируем промежуточные варианты'}</h2>
       <p className="text-[13px] leading-[1.6] text-[#686e78]">Можно перейти в личный кабинет. Статус и результат сохранятся в этом чате.</p>

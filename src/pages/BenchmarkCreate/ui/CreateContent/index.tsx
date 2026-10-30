@@ -17,8 +17,10 @@ import { Sidebar } from '../Sidebar';
 import { RestoreModal } from '@ui/RestoreModal';
 import { buildDerivedRequest } from './utils/buildDerivedRequest';
 import { DemoGenerationLoader } from '../DemoGenerationLoader';
+import { ContactCollectionForm } from '@/components/contact/ContactCollectionForm';
 import type { DerivedMode, MockExample } from './types';
 import { readMockExamples, readMockReady } from './mock';
+import './benchmarkChatTheme.css';
 
 export const CreateContent = () => {
   const { lang, t, user } = useApp();
@@ -193,6 +195,7 @@ export const CreateContent = () => {
   const readableMessages = displayedMessages.filter((message) =>
     !readMockExamples(message.content) && !readMockReady(message.content) &&
     (!showMockProductionLoading || message.role !== 'assistant' || Date.parse(message.timestamp) <= mockProductionLoading.startedAt));
+  const mockDraftMessageId = readableMessages.findLast((message) => message.resultKey === 'mock_draft_ready')?.id;
 
   const generationPanel = <GenerationPanel
     key={`${activeId}:${generation?.jobId ?? ''}`}
@@ -275,15 +278,15 @@ export const CreateContent = () => {
             </p>
           )}
 
-          <div className="flex-1 overflow-y-auto px-4 pt-7 pb-3">
-            <div className="flex flex-col gap-6 pb-6 w-full max-w-[760px] mx-auto">
-              {showSourceStatus && <section className="rounded-[18px] border border-[#e9edf2] bg-white p-5 text-[#1e1e20]">
+          <div className="benchmark-chat-thread flex-1 overflow-y-auto px-4 pt-7 pb-3">
+            <div className="benchmark-chat-thread-inner flex flex-col gap-6 pb-6 w-full max-w-[760px] mx-auto">
+              {showSourceStatus && <section className="benchmark-chat-card rounded-[18px] border border-[#e9edf2] bg-white p-5 text-[#1e1e20]">
                 {sourceLoading ? <p className="text-[13px] text-[#686e78]">Загружаем исходный бенчмарк…</p>
                   : sourceError || !source ? <div><p className="text-[13px] text-[#686e78]">Не удалось загрузить исходный бенчмарк.</p><button type="button" onClick={() => { if (isSuiteSource) { void refetchSuite(); void refetchTests(); } else { if (detectBaseType) void refetchSuite(); void refetchTest(); } }} className="mt-3 cursor-pointer rounded-[30px] bg-[#515dad1a] px-4 py-2 text-[12px] text-[#515dad]">Повторить</button></div>
                     : <p className="text-[13px] text-[#686e78]">{connectionError ? 'Чат не открылся. Повторите подключение.' : 'Открываем новый чат…'}{connectionError && <button type="button" onClick={derivedEntry ? retryEntrySession : startNewSession} className="ml-2 cursor-pointer text-[#515dad] underline">Повторить</button>}</p>}
               </section>}
               {derivedEntry && sourceReady && activeId === entryConversationId && (
-                <div className="w-full self-start rounded-[20px] bg-[#f3f6fa] px-7 py-6 text-[13px] leading-[1.8] text-[#1e1e20]">
+                <div className="benchmark-chat-card w-full self-start rounded-[20px] bg-[#f3f6fa] px-7 py-6 text-[13px] leading-[1.8] text-[#1e1e20]">
                   <p className="m-0 font-semibold">{derivedMode === 'russify'
                     ? `Что нужно изменить при адаптации бенчмарка «${source?.name}» на русский язык?`
                     : `Что нужно изменить в бенчмарке «${source?.name}»?`}</p>
@@ -291,8 +294,8 @@ export const CreateContent = () => {
                 </div>
               )}
               {readableMessages.map((msg) => (
+                <React.Fragment key={msg.id}>
                 <MessageBubble
-                  key={msg.id}
                   msg={msg}
                   benchmarks={allBenchmarks}
                   recommendationDisabled={isTyping || (
@@ -315,9 +318,13 @@ export const CreateContent = () => {
                     }
                     : undefined}
                 />
+                {msg.id === mockDraftMessageId && activeDialogue?.conversationId && (
+                  <ContactCollectionForm key={activeDialogue.conversationId} chatId={activeDialogue.conversationId} context="new-test" />
+                )}
+                </React.Fragment>
               ))}
               {showDemoLoading && <DemoGenerationLoader startedAt={demoLoading.startedAt} />}
-              {showMockExamples && !showDemoLoading && !showMockProductionLoading && !showGeneration && selectedMockExamples && latestMockExamplesMessage && <section className="w-full max-w-[88%] rounded-[20px] bg-[#f3f6fa] px-[22px] py-[18px] text-[#1e1e20] max-[600px]:max-w-full">
+              {showMockExamples && !showDemoLoading && !showMockProductionLoading && !showGeneration && selectedMockExamples && latestMockExamplesMessage && <section className="benchmark-chat-card w-full max-w-[88%] rounded-[20px] bg-[#f3f6fa] px-[22px] py-[18px] text-[#1e1e20] max-[600px]:max-w-full">
                 <h2 className="text-[20px] font-medium">Выберите примеры для продолжения</h2>
                 <p className="mt-2 text-[12px] leading-[1.6] text-[#686e78]">Снимите галочки с ненужных примеров. Чтобы получить другие варианты, просто напишите в чат, что изменить.</p>
                 <div className="mt-5 space-y-4">{selectedMockExamples.map((example, index) => <article key={index} className="rounded-[16px] border border-[#e9edf2] bg-white p-[22px]">
@@ -329,7 +336,7 @@ export const CreateContent = () => {
                 <div className="mt-6 flex flex-col items-start gap-3"><span className="text-[11px] text-[#686e78]">Выбрано: {chosenMockExamples.length} из {selectedMockExamples.length}</span><button type="button" disabled={!mockExamplesValid || isTyping} onClick={() => { if (!activeId) return; void sendMessage(`Масштабировать выбранные примеры: ${JSON.stringify(chosenMockExamples)}`); setMockProductionLoading({ conversationId: activeId, startedAt: Date.now() }); }} className="inline-flex items-center gap-2 rounded-[30px] border border-transparent bg-[#515dad] px-5 py-3 text-[12px] font-medium text-white transition hover:bg-[#465195] disabled:cursor-not-allowed disabled:opacity-50">Масштабировать выбранные ({chosenMockExamples.length})<svg aria-hidden="true" viewBox="0 0 18 18" className="h-[18px] w-[18px] shrink-0 fill-none stroke-current stroke-[1.7] [stroke-linecap:round] [stroke-linejoin:round]"><path d="m3 9 4 4 8-9" /></svg></button>{chosenMockExamples.length > 0 && !mockExamplesValid && <p className="text-[11px] text-[#ac3636]">Заполните задания и эталонные ответы; задания не должны повторяться.</p>}</div>
               </section>}
               {showMockProductionLoading && <DemoGenerationLoader startedAt={mockProductionLoading.startedAt} producing />}
-              {derivedEntry && mockReady && !showMockProductionLoading && <section className="w-full max-w-[88%] rounded-[20px] bg-[#f3f6fa] px-[22px] py-[18px] text-[#1e1e20] max-[600px]:max-w-full">
+              {derivedEntry && mockReady && !showMockProductionLoading && <section className="benchmark-chat-card w-full max-w-[88%] rounded-[20px] bg-[#f3f6fa] px-[22px] py-[18px] text-[#1e1e20] max-[600px]:max-w-full">
                 <h2 className="text-[22px] font-medium">Ваш набор готов</h2>
                 <p className="mt-3 text-[13px] leading-[1.7]">«{mockReady.name}» создан на основе {mockReady.examples.length} {mockReady.examples.length === 1 ? 'выбранного примера' : 'выбранных примеров'} и добавлен в общий каталог.</p>
                 <div className="mt-6 flex flex-wrap gap-3"><button type="button" onClick={() => {
@@ -354,7 +361,7 @@ export const CreateContent = () => {
           </div>
 
           <div
-            className="w-full px-4 py-3 flex-shrink-0"
+            className="benchmark-chat-composer w-full px-4 py-3 flex-shrink-0"
             style={{ backgroundColor: 'var(--bg-page)' }}
           >
             {showGeneration && (

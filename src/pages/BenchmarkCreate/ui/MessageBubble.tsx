@@ -31,14 +31,17 @@ export const MessageBubble = ({
     ? msg.content.split('\n').map((line) => line.trim()).filter(Boolean)
     : [];
   const isSummary = summaryLines.length > 0;
+  const messageStyle = isUser
+    ? 'benchmark-chat-message--user bg-[#eeeff7] px-[22px] py-4 max-[600px]:px-[18px] max-[600px]:py-3.5 text-[#1e1e20]'
+    : `benchmark-chat-message--assistant ${isSummary || msg.recommendations?.length ? 'benchmark-chat-message--rich' : 'benchmark-chat-message--plain'} bg-[#f3f6fa] px-7 py-6 text-[#1e1e20]`;
   const variants = msg.agentOptions?.map((option) => option.label)
     ?? msg.structuredPrompt?.options.map((option) => option.label)
     ?? msg.quickReplies
     ?? [];
 
   return (
-    <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div className={`flex w-fit max-w-[90%] flex-col gap-2 rounded-[20px] text-[13px] leading-[1.8] [overflow-wrap:anywhere] max-[600px]:rounded-2xl max-[600px]:p-5 ${isUser ? 'bg-[#eeeff7] px-[22px] py-4 max-[600px]:px-[18px] max-[600px]:py-3.5 text-[#1e1e20]' : 'bg-[#f3f6fa] px-7 py-6 text-[#1e1e20]'}`}>
+    <div className={`benchmark-chat-message-row flex w-full ${isUser ? 'benchmark-chat-message-row--user justify-end' : 'benchmark-chat-message-row--assistant justify-start'}`}>
+      <div className={`benchmark-chat-message flex w-fit max-w-[90%] flex-col gap-2 rounded-[20px] text-[13px] leading-[1.8] [overflow-wrap:anywhere] max-[600px]:rounded-2xl max-[600px]:p-5 ${messageStyle}`}>
         {isSummary ? <div className="min-w-0">
           <div className="mb-3 flex items-center gap-3 text-[18px] leading-[1.4] text-[#1e1e20]"><FileText size={20} className="shrink-0 text-[#515dad]" /><strong className="font-medium">Всё готово к подтверждению</strong></div>
           <p className="m-0 text-[12px] text-[#686e78]">Проверьте требования:</p>

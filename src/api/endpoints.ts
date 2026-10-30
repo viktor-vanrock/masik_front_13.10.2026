@@ -87,6 +87,9 @@ export const BACKEND_PATHS = {
     cancelGeneration: (id: string, jobId: string) => `/conversations/${encodeURIComponent(id)}/generation/${encodeURIComponent(jobId)}/cancel`,
     production: (id: string) => `/conversations/${encodeURIComponent(id)}/production`,
   },
+  contactRequests: {
+    create: '/contact-requests',
+  },
   analytics: {
     overview: '/analytics/overview',
     benchmarkViews: '/analytics/benchmarks/views',
