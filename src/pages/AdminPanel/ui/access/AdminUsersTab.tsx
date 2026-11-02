@@ -339,7 +339,7 @@ function UserFormDialog({ user, onClose }: { user?: User; onClose: () => void })
           </FormField>
 
           {(clientError || serverError) && (
-            <div role="alert" className="rounded-lg p-3 text-sm" style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FCA5A5' }}>
+            <div role="alert" className="rounded-lg p-3 text-sm" style={{ backgroundColor: 'var(--admin-danger-bg)', color: 'var(--admin-danger-ink)', border: '1px solid var(--admin-danger-border)' }}>
               {clientError ?? serverError}
             </div>
           )}
@@ -376,16 +376,16 @@ function UserDeleteDialog({ user, onClose }: { user: User; onClose: () => void }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => !mutation.isPending && onClose()}>
       <div className="w-full max-w-sm rounded-2xl p-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }} onClick={(event) => event.stopPropagation()}>
-        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: '#FEF2F2' }}>
-          <Trash2 size={18} style={{ color: '#DC2626' }} />
+        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: 'var(--admin-danger-bg)' }}>
+          <Trash2 size={18} style={{ color: 'var(--admin-danger-ink)' }} />
         </div>
         <h2 className="mb-1 font-semibold" style={{ color: 'var(--text-primary)' }}>{t.admin.users.deleteTitle}</h2>
         <p className="mb-1 text-sm" style={{ color: 'var(--text-secondary)' }}>{user.username}</p>
         <p className="mb-5 text-xs" style={{ color: 'var(--text-muted)' }}>{t.admin.users.deleteHint}</p>
-        {error && <div role="alert" className="mb-4 rounded-lg p-3 text-sm" style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FCA5A5' }}>{error}</div>}
+        {error && <div role="alert" className="mb-4 rounded-lg p-3 text-sm" style={{ backgroundColor: 'var(--admin-danger-bg)', color: 'var(--admin-danger-ink)', border: '1px solid var(--admin-danger-border)' }}>{error}</div>}
         <div className="flex gap-3">
           <button type="button" onClick={onClose} disabled={mutation.isPending} className="flex-1 rounded-xl py-2.5 text-sm font-medium disabled:opacity-60" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>{t.admin.users.cancel}</button>
-          <button type="button" onClick={() => void confirm()} disabled={mutation.isPending} className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-60" style={{ backgroundColor: '#DC2626' }}>
+          <button type="button" onClick={() => void confirm()} disabled={mutation.isPending} className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-60" style={{ backgroundColor: 'var(--admin-danger-ink)' }}>
             {mutation.isPending && <Loader2 size={14} className="animate-spin" />}
             {t.admin.users.deleteButton}
           </button>

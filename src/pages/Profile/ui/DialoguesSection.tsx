@@ -16,15 +16,14 @@ export const DialoguesSection = ({ dialogues, isPending, isError, onRetry }: Pro
   const { t } = useApp();
 
   return (
-    <>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+    <section className="mt-14 grid gap-[18px] max-[700px]:mt-10">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h2 className="m-0 text-[24px] leading-[1.2] font-medium tracking-[-.01em]">
           {t.profile.creationSessions}
         </h2>
         <Link
           to="/create"
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: 'var(--accent)' }}
+          className="inline-flex min-h-9 cursor-pointer items-center justify-center gap-2 rounded-xl border border-transparent px-[14px] text-[14px] font-semibold leading-5 transition-colors disabled:cursor-not-allowed disabled:opacity-60 border-[#ffffff1a] bg-[#ffffff14] text-[#f2f3fc] hover:not-disabled:bg-[#ffffff1f]"
         >
           <PlusCircle size={14} />
           {t.profile.newBenchmark}
@@ -32,11 +31,11 @@ export const DialoguesSection = ({ dialogues, isPending, isError, onRetry }: Pro
       </div>
 
       {isPending ? (
-        <p role="status" className="py-6 text-sm" style={{ color: 'var(--text-muted)' }}>
+        <p role="status" className="text-[14px] text-[#acb3cf]">
           {t.common.loading}
         </p>
       ) : isError ? (
-        <div role="alert" className="py-6 space-y-3 text-sm" style={{ color: 'var(--danger)' }}>
+        <div role="alert" className="text-[14px] text-[#ff91a0]">
           <p>{t.profile.dialoguesLoadError}</p>
           <button type="button" onClick={onRetry} className="underline">
             {t.catalogue.retry}
@@ -47,6 +46,6 @@ export const DialoguesSection = ({ dialogues, isPending, isError, onRetry }: Pro
       ) : (
         <DialoguesList dialogues={dialogues} />
       )}
-    </>
+    </section>
   );
 }

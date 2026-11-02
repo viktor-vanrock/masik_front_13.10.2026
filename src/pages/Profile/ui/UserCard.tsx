@@ -1,5 +1,4 @@
 import { LogOut } from 'lucide-react';
-import { ROLE_COLORS } from '../constants';
 import type { User, UserRole } from '@/types';
 import { useApp } from '@/hooks/useApp';
 
@@ -14,52 +13,16 @@ export const UserCard = ({ user, userRole, onLogout, isLoggingOut = false }: Pro
   const { t } = useApp();
 
   return (
-    <div
-      className="rounded-xl p-6 mb-6 flex items-center gap-5"
-      style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}
-    >
-      <div
-        className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-xl flex-shrink-0"
-        style={{ background: 'linear-gradient(135deg, var(--accent), var(--accent-secondary))' }}
-      >
-        {user.username.charAt(0).toUpperCase()}
+    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-5 max-[700px]:grid-cols-[auto_minmax(0,1fr)] max-[700px]:gap-[14px]">
+      <div className="grid size-[72px] place-items-center rounded-full bg-[radial-gradient(circle_at_34%_30%,#b2bef3,#5865c9_45%,#1b2054)] text-[30px] font-medium text-white shadow-[0_0_40px_-8px_#5865c9b3] max-[700px]:size-14 max-[700px]:text-[24px]" aria-hidden="true">{user.username.charAt(0).toUpperCase()}</div>
+      <div className="min-w-0 [&_h1]:m-0 [&_h1]:text-[clamp(30px,4vw,42px)] [&_h1]:leading-[1.12] [&_h1]:font-medium [&_h1]:tracking-[-.02em] [&_h1]:[overflow-wrap:anywhere] [&_p]:mt-1 [&_p]:mb-0 [&_p]:text-[#acb3cf] [&_p]:[overflow-wrap:anywhere]">
+        <h1>{user.username}</h1>
+        {user.email && <p>{user.email}</p>}
       </div>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-xl font-bold truncate" style={{ color: 'var(--text-primary)' }}>
-            {user.username}
-          </h1>
-          {userRole && (
-            <span
-              className="text-xs px-2 py-0.5 rounded-full font-medium"
-              style={{
-                backgroundColor: ROLE_COLORS[userRole].bg,
-                color: ROLE_COLORS[userRole].color,
-              }}
-            >
-              {(t.roles as Record<string, string>)[userRole] ?? userRole}
-            </span>
-          )}
-        </div>
-        {user.email && (
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            {user.email}
-          </p>
-        )}
-      </div>
-
-      <div className="flex flex-col items-end gap-1">
-        <button
-          onClick={onLogout}
-          disabled={isLoggingOut}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors hover:opacity-80 disabled:opacity-60 disabled:cursor-not-allowed"
-          style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-elevated)' }}
-        >
-          <LogOut size={14} />
-          {t.nav.logout}
-        </button>
-      </div>
+      {userRole && <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#5865c92e] px-[10px] py-1 text-[12px] leading-[18px] font-semibold text-[#afb8ff] max-[700px]:col-start-2">{(t.roles as Record<string, string>)[userRole] ?? userRole}</span>}
+      <button type="button" onClick={onLogout} disabled={isLoggingOut} className="inline-flex min-h-9 cursor-pointer items-center justify-center gap-2 rounded-xl border border-transparent px-[14px] text-[14px] font-semibold leading-5 transition-colors disabled:cursor-not-allowed disabled:opacity-60 border-[#ffffff1a] bg-[#ffffff14] text-[#f2f3fc] hover:not-disabled:bg-[#ffffff1f] max-[700px]:col-start-2 max-[700px]:justify-self-start">
+        <LogOut size={14} />{t.nav.logout}
+      </button>
     </div>
   );
 }

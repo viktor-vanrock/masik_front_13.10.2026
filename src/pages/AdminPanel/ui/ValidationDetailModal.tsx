@@ -177,9 +177,9 @@ export const ValidationDetailModal = ({
             disabled={isPending}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
             style={{
-              backgroundColor: '#FEF2F2',
-              color: '#DC2626',
-              border: '1px solid #FCA5A5',
+              backgroundColor: 'var(--admin-danger-bg)',
+              color: 'var(--admin-danger-ink)',
+              border: '1px solid var(--admin-danger-border)',
             }}
           >
             <XCircle size={14} />
@@ -191,9 +191,9 @@ export const ValidationDetailModal = ({
             title={!canApprove ? t.admin.metricRequiredForPublication : undefined}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
             style={{
-              backgroundColor: '#F0FDF4',
-              color: '#16A34A',
-              border: '1px solid #86EFAC',
+              backgroundColor: 'var(--admin-success-bg)',
+              color: 'var(--admin-success-ink)',
+              border: '1px solid var(--admin-success-border)',
             }}
           >
             <CheckCircle2 size={14} />

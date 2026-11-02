@@ -53,8 +53,7 @@ export function AdminTabs() {
   return (
     <div>
       <div
-        className="mb-4 flex flex-wrap gap-1"
-        style={{ borderBottom: '1px solid var(--border)' }}
+        className="mb-6 flex w-fit max-w-full flex-wrap gap-1 rounded-2xl border border-[#acb3cf33] bg-[#1d202f73] p-1 max-[700px]:w-full"
       >
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -63,14 +62,8 @@ export function AdminTabs() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="px-4 py-2 text-sm font-medium transition-colors flex-shrink-0"
-              style={{
-                color: isActive ? 'var(--accent)' : 'var(--text-muted)',
-                borderBottom: isActive
-                  ? '2px solid var(--accent)'
-                  : '2px solid transparent',
-                marginBottom: -1,
-              }}
+              className="inline-flex cursor-pointer items-center gap-1 rounded-xl px-[14px] py-[9px] text-[14px] font-semibold text-[#acb3cf] transition-colors hover:bg-[#ffffff14] hover:text-[#f2f3fc] aria-pressed:bg-[#3a425d] aria-pressed:text-[#f2f3fc] max-[700px]:px-[10px] max-[700px]:py-2"
+              aria-pressed={isActive}
             >
               {tab.label}
 

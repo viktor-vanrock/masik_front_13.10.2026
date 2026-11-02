@@ -200,9 +200,9 @@ export const CategoryFormDialog = ({ category, onClose }: Props) => {
                   role="alert"
                   className="p-2 rounded-lg text-xs"
                   style={{
-                    backgroundColor: '#FEF2F2',
-                    color: '#DC2626',
-                    border: '1px solid #FCA5A5',
+                    backgroundColor: 'var(--admin-danger-bg)',
+                    color: 'var(--admin-danger-ink)',
+                    border: '1px solid var(--admin-danger-border)',
                   }}
                 >
                   {serverError}

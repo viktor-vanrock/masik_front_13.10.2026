@@ -39,9 +39,9 @@ export const CategoryDeleteModal = ({ category, onClose }: Props) => {
       >
         <div
           className="w-10 h-10 rounded-full flex items-center justify-center mb-4"
-          style={{ backgroundColor: '#FEF2F2' }}
+          style={{ backgroundColor: 'var(--admin-danger-bg)' }}
         >
-          <Trash2 size={18} style={{ color: '#DC2626' }} />
+          <Trash2 size={18} style={{ color: 'var(--admin-danger-ink)' }} />
         </div>
         <h2 className="text-base font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
           {t.admin.categories.confirmDelete}
@@ -58,9 +58,9 @@ export const CategoryDeleteModal = ({ category, onClose }: Props) => {
             role="alert"
             className="mb-4 p-2 rounded-lg text-xs"
             style={{
-              backgroundColor: '#FEF2F2',
-              color: '#DC2626',
-              border: '1px solid #FCA5A5',
+              backgroundColor: 'var(--admin-danger-bg)',
+              color: 'var(--admin-danger-ink)',
+              border: '1px solid var(--admin-danger-border)',
             }}
           >
             {serverError}
@@ -86,7 +86,7 @@ export const CategoryDeleteModal = ({ category, onClose }: Props) => {
             onClick={handleDelete}
             disabled={isPending}
             className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-60"
-            style={{ backgroundColor: '#DC2626' }}
+            style={{ backgroundColor: 'var(--admin-danger-ink)' }}
           >
             {isPending && <Loader2 size={14} className="animate-spin" />}
             {t.admin.categories.confirm}

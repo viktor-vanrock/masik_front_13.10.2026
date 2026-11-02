@@ -18,7 +18,7 @@ export function AdminPageHeader() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center [&_h1]:text-[clamp(30px,4vw,42px)]! [&_h1]:leading-[1.12] [&_h1]:font-medium! [&_h1]:tracking-[-.02em] [&_p]:mt-1.5 [&_p]:text-[15px]! [&>a]:min-h-11 [&>a]:rounded-xl [&>a]:px-5 [&>a]:text-[15px] [&>a]:font-semibold [&>a]:transition-colors [&>a:hover]:bg-[#4552b4]!">
         <div className="flex items-center gap-3">
           <div
             className="w-9 h-9 rounded-lg flex items-center justify-center"
@@ -45,7 +45,7 @@ export function AdminPageHeader() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="mb-8 grid grid-cols-2 gap-3">
         <StatCard
           icon={<Database size={16} />}
           label={t.admin.totalBenchmarks}

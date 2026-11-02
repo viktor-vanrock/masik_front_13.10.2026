@@ -11,18 +11,18 @@ const STATUS_STYLE: Record<
   { color: string; background: string; icon: typeof Clock3 }
 > = {
   validation: {
-    color: 'var(--warning)',
-    background: 'var(--bg-elevated)',
+    color: '#e0b978',
+    background: '#382d20',
     icon: Clock3,
   },
   published: {
-    color: 'var(--success)',
-    background: 'var(--status-done-bg)',
+    color: '#5de3bd',
+    background: '#1d302a',
     icon: CheckCircle2,
   },
   rejected: {
-    color: 'var(--danger)',
-    background: '#FEF2F2',
+    color: '#ff91a0',
+    background: '#38232d',
     icon: XCircle,
   },
 };
@@ -40,29 +40,24 @@ function SubmissionCard({ submission }: { submission: BenchmarkType }) {
 
   const content = (
     <div
-      className="rounded-xl p-4 transition-colors"
-      style={{
-        backgroundColor: 'var(--bg-card)',
-        border: '1px solid var(--border)',
-      }}
+      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-3 rounded-[24px] border border-[#acb3cf33] bg-[#1d202f73] px-5 py-[18px] text-[#f2f3fc]"
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="grid min-w-0 gap-1.5">
         <div className="min-w-0">
           <p
-            className="font-medium truncate"
-            style={{ color: 'var(--text-primary)' }}
+            className="m-0 text-[18px] leading-6 font-semibold [overflow-wrap:anywhere]"
           >
             {name}
           </p>
           {submittedAt && (
-            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+            <p className="m-0 flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-[#8890ad]">
               {t.profile.submitted}:{' '}
               {formatLocaleDate(lang, submittedAt)}
             </p>
           )}
         </div>
         <span
-          className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium flex-shrink-0"
+          className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#5865c92e] px-[10px] py-1 text-[12px] leading-[18px] font-semibold text-[#afb8ff]"
           style={{ color: style.color, backgroundColor: style.background }}
         >
           <StatusIcon size={12} />
@@ -73,7 +68,7 @@ function SubmissionCard({ submission }: { submission: BenchmarkType }) {
       {submission.catalogEntry?.rejectionReason && (
         <div
           className="flex items-start gap-2 text-xs mt-3 p-3 rounded-lg"
-          style={{ color: 'var(--danger)', backgroundColor: '#FEF2F2' }}
+          style={{ color: '#ff91a0', backgroundColor: '#38232d' }}
         >
           <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
           <span>
@@ -98,18 +93,16 @@ export function SubmissionsSection() {
     useMyCatalogSubmissionsQuery({ limit: 100 });
 
   return (
-    <section className="mb-8">
-      <div className="flex items-center justify-between mb-4">
+    <section className="mt-14 grid gap-[18px] max-[700px]:mt-10">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <h2
-          className="text-lg font-semibold"
-          style={{ color: 'var(--text-primary)' }}
+          className="m-0 text-[24px] leading-[1.2] font-medium tracking-[-.01em]"
         >
           {t.profile.myBenchmarks}
         </h2>
         <Link
           to={ROUTES.ADD_BENCHMARK}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: 'var(--accent)' }}
+          className="inline-flex min-h-9 cursor-pointer items-center justify-center gap-2 rounded-xl border border-transparent px-[14px] text-[14px] font-semibold leading-5 transition-colors disabled:cursor-not-allowed disabled:opacity-60 border-[#ffffff1a] bg-[#ffffff14] text-[#f2f3fc] hover:not-disabled:bg-[#ffffff1f]"
         >
           <PlusCircle size={14} />
           {t.profile.newBenchmark}
@@ -117,7 +110,7 @@ export function SubmissionsSection() {
       </div>
 
       {isPending && (
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+        <p className="text-[14px] text-[#acb3cf]">
           {t.common.loading}
         </p>
       )}
@@ -125,20 +118,14 @@ export function SubmissionsSection() {
         <button
           type="button"
           onClick={() => void refetch()}
-          className="text-sm"
-          style={{ color: 'var(--danger)' }}
+          className="text-[14px] text-[#ff91a0]"
         >
           {t.catalogue.loadErrorFallback}
         </button>
       )}
       {!isPending && !isError && (data?.data.length ?? 0) === 0 && (
         <p
-          className="text-sm p-4 rounded-xl"
-          style={{
-            color: 'var(--text-muted)',
-            backgroundColor: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-          }}
+          className="grid justify-items-center gap-[14px] rounded-[24px] border border-dashed border-[#acb3cf33] px-6 py-9 text-center text-[14px] text-[#acb3cf]"
         >
           {t.profile.emptySubmissions}
         </p>

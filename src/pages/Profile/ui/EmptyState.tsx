@@ -8,17 +8,15 @@ export const EmptyState = () => {
   
   return (
     <div
-      className="flex flex-col items-center justify-center py-16 rounded-xl"
-      style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }}
+      className="grid justify-items-center gap-[14px] rounded-[24px] border border-dashed border-[#acb3cf33] px-6 py-9 text-center text-[14px] text-[#acb3cf]"
     >
-      <MessageSquare size={40} style={{ color: 'var(--icon-empty)' }} className="mb-4" />
-      <p className="font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+      <MessageSquare size={32} className="text-[#8890ad]" />
+      <p className="m-0 text-[18px] font-semibold text-[#f2f3fc]">
         {t.profile.emptyDialogues}
       </p>
       <Link
         to="/create"
-        className="mt-4 px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90 transition-opacity"
-        style={{ backgroundColor: 'var(--accent)' }}
+        className="inline-flex min-h-9 cursor-pointer items-center justify-center gap-2 rounded-xl border border-transparent px-[14px] text-[14px] font-semibold leading-5 transition-colors disabled:cursor-not-allowed disabled:opacity-60 min-h-11 bg-[#5865c9] px-5 text-white hover:bg-[#4552b4]"
       >
         {t.profile.newBenchmark}
       </Link>

@@ -9,10 +9,10 @@ import { createTestQueryClient, renderWithProviders } from '@/test/renderWithPro
 import { saveConvName } from '@/pages/BenchmarkCreate/ui/CreateContent/utils/conversationUtils';
 import { Profile } from './index';
 
-const identity = vi.hoisted(() => ({ userId: 'alice', status: 'authenticated' }));
+const identity = vi.hoisted(() => ({ userId: 'alice', status: 'authenticated', role: 'USER' as 'USER' | 'ADMIN' | 'SUPERUSER' | 'DEMO' }));
 vi.mock('@/hooks/useApp', () => ({ useApp: () => ({
   t: translations.ru, lang: 'ru', status: identity.status,
-  user: mockUser({ id: identity.userId }), userRole: 'USER', logout: vi.fn(), isLoggingOut: false,
+  user: mockUser({ id: identity.userId }), userRole: identity.role, logout: vi.fn(), isLoggingOut: false,
 }) }));
 vi.mock('@/api/conversations/requests', () => ({ listConversations: vi.fn(), getConversation: vi.fn() }));
 // Submission behavior is covered separately; keep this test focused on real
@@ -27,9 +27,24 @@ beforeEach(() => {
   vi.mocked(listConversations).mockReset();
   identity.userId = 'alice';
   identity.status = 'authenticated';
+  identity.role = 'USER';
 });
 
 describe('Profile conversation history', () => {
+  it.each(['ADMIN', 'SUPERUSER'] as const)('shows contact requests for %s', async (role) => {
+    identity.role = role;
+    vi.mocked(listConversations).mockResolvedValue([]);
+    renderWithProviders(<Profile />);
+    expect(await screen.findByRole('heading', { name: 'Контактные заявки' })).toBeInTheDocument();
+  });
+
+  it.each(['USER', 'DEMO'] as const)('hides contact requests from %s', (role) => {
+    identity.role = role;
+    vi.mocked(listConversations).mockResolvedValue([]);
+    renderWithProviders(<Profile />);
+    expect(screen.queryByRole('heading', { name: 'Контактные заявки' })).not.toBeInTheDocument();
+  });
+
   it('renders real owner sessions and working links without invented messages', async () => {
     const id = 'ed6b9b1d-cbe1-4e81-9d5a-7d055642405b';
     saveConvName(id, 'Настоящая сессия', 'Real session');

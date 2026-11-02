@@ -143,9 +143,9 @@ export function ValidationCard({
             disabled={isPending}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
             style={{
-              backgroundColor: '#FEF2F2',
-              color: '#DC2626',
-              border: '1px solid #FCA5A5',
+              backgroundColor: 'var(--admin-danger-bg)',
+              color: 'var(--admin-danger-ink)',
+              border: '1px solid var(--admin-danger-border)',
             }}
           >
             <XCircle size={12} />
@@ -157,9 +157,9 @@ export function ValidationCard({
             title={!canApprove ? t.admin.metricRequiredForPublication : undefined}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
             style={{
-              backgroundColor: '#F0FDF4',
-              color: '#16A34A',
-              border: '1px solid #86EFAC',
+              backgroundColor: 'var(--admin-success-bg)',
+              color: 'var(--admin-success-ink)',
+              border: '1px solid var(--admin-success-border)',
             }}
           >
             <CheckCircle2 size={12} />

@@ -33,7 +33,7 @@ const API_KEY_STATUS_STYLES: Record<
 > = {
   active: {
     backgroundColor: 'rgba(34,197,94,0.12)',
-    color: '#16A34A',
+    color: 'var(--admin-success-ink)',
   },
   expired: {
     backgroundColor: 'rgba(245,158,11,0.14)',
@@ -41,7 +41,7 @@ const API_KEY_STATUS_STYLES: Record<
   },
   revoked: {
     backgroundColor: 'rgba(239,68,68,0.12)',
-    color: '#DC2626',
+    color: 'var(--admin-danger-ink)',
   },
 };
 
@@ -112,7 +112,7 @@ export function AdminApiKeysTab() {
       </div>
 
       {scopesQuery.isError && (
-        <div role="alert" className="rounded-lg p-3 text-sm" style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FCA5A5' }}>
+        <div role="alert" className="rounded-lg p-3 text-sm" style={{ backgroundColor: 'var(--admin-danger-bg)', color: 'var(--admin-danger-ink)', border: '1px solid var(--admin-danger-border)' }}>
           {formatServerErrorMessage(scopesQuery.error) ?? t.admin.apiKeys.scopesLoadError}
         </div>
       )}
@@ -170,7 +170,7 @@ export function AdminApiKeysTab() {
                   onClick={() => setDialog({ kind: 'revoke', key })}
                   disabled={revoked}
                   className="flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
-                  style={{ color: '#DC2626', border: '1px solid rgba(220,38,38,0.35)' }}
+                  style={{ color: 'var(--admin-danger-ink)', border: '1px solid rgba(220,38,38,0.35)' }}
                 >
                   <ShieldOff size={15} />
                   {t.admin.apiKeys.revokeButton}
@@ -312,7 +312,7 @@ function ApiKeyFormDialog({
             ))}
           </fieldset>
 
-          {(clientError || serverError) && <div role="alert" className="rounded-lg p-3 text-sm" style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FCA5A5' }}>{clientError ?? serverError}</div>}
+          {(clientError || serverError) && <div role="alert" className="rounded-lg p-3 text-sm" style={{ backgroundColor: 'var(--admin-danger-bg)', color: 'var(--admin-danger-ink)', border: '1px solid var(--admin-danger-border)' }}>{clientError ?? serverError}</div>}
 
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} disabled={mutation.isPending} className="flex-1 rounded-xl py-2.5 text-sm font-medium disabled:opacity-60" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>{t.admin.apiKeys.cancel}</button>
@@ -374,14 +374,14 @@ function ApiKeyRevokeDialog({ apiKey, onClose }: { apiKey: ExternalApiKey; onClo
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => !mutation.isPending && onClose()}>
       <div className="w-full max-w-sm rounded-2xl p-6" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)' }} onClick={(event) => event.stopPropagation()}>
-        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: '#FEF2F2' }}><ShieldOff size={18} style={{ color: '#DC2626' }} /></div>
+        <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: 'var(--admin-danger-bg)' }}><ShieldOff size={18} style={{ color: 'var(--admin-danger-ink)' }} /></div>
         <h2 className="mb-1 font-semibold" style={{ color: 'var(--text-primary)' }}>{t.admin.apiKeys.revokeTitle}</h2>
         <p className="mb-1 text-sm" style={{ color: 'var(--text-secondary)' }}>{apiKey.name}</p>
         <p className="mb-5 text-xs" style={{ color: 'var(--text-muted)' }}>{t.admin.apiKeys.revokeHint}</p>
-        {error && <div role="alert" className="mb-4 rounded-lg p-3 text-sm" style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FCA5A5' }}>{error}</div>}
+        {error && <div role="alert" className="mb-4 rounded-lg p-3 text-sm" style={{ backgroundColor: 'var(--admin-danger-bg)', color: 'var(--admin-danger-ink)', border: '1px solid var(--admin-danger-border)' }}>{error}</div>}
         <div className="flex gap-3">
           <button type="button" onClick={onClose} disabled={mutation.isPending} className="flex-1 rounded-xl py-2.5 text-sm font-medium disabled:opacity-60" style={{ backgroundColor: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>{t.admin.apiKeys.cancel}</button>
-          <button type="button" onClick={() => void confirm()} disabled={mutation.isPending} className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-60" style={{ backgroundColor: '#DC2626' }}>
+          <button type="button" onClick={() => void confirm()} disabled={mutation.isPending} className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-white disabled:opacity-60" style={{ backgroundColor: 'var(--admin-danger-ink)' }}>
             {mutation.isPending && <Loader2 size={14} className="animate-spin" />}
             {t.admin.apiKeys.revokeButton}
           </button>

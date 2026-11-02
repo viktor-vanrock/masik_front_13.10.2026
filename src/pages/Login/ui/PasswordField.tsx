@@ -1,7 +1,6 @@
 import { forwardRef, useId, useState } from 'react';
 import type { InputHTMLAttributes } from 'react';
 import { Lock, Eye, EyeOff } from 'lucide-react';
-import { FIELD_STYLE } from '../consts';
 import { useApp } from '@/hooks/useApp';
 
 interface PasswordFieldProps
@@ -16,28 +15,23 @@ interface PasswordFieldProps
  * forwardRef — чтобы react-hook-form `register()` мог прокинуть ref.
  */
 export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
-  function PasswordField({ label, error, onFocus, onBlur, visible, onVisibilityChange, ...props }, ref) {
+  function PasswordField({ label, error, visible, onVisibilityChange, ...props }, ref) {
     const { t } = useApp();
     const [localVisible, setLocalVisible] = useState(false);
     const showPassword = visible ?? localVisible;
     const generatedId = useId();
     const id = props.id ?? generatedId;
-    const [isFocused, setIsFocused] = useState(false);
+    const errorId = `${id}-error`;
 
     return (
-      <div>
-        <label
-          htmlFor={id}
-          className="block text-sm font-medium mb-1.5"
-          style={{ color: 'var(--text-secondary)' }}
-        >
+      <div className="grid gap-2 [&_label]:text-[14px] [&_label]:font-semibold">
+        <label htmlFor={id}>
           {label}
         </label>
         <div className="relative">
           <Lock
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-            style={{ color: 'var(--text-muted)' }}
+            className="pointer-events-none absolute top-1/2 left-[14px] -translate-y-1/2 text-[#8890ad]"
           />
           <input
             {...props}
@@ -45,13 +39,9 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
             id={id}
             type={showPassword ? 'text' : 'password'}
             placeholder={props.placeholder ?? '••••••••'}
-            className="w-full pl-9 pr-10 py-3 rounded-xl text-sm transition-colors"
-            style={{
-              ...FIELD_STYLE,
-              borderColor: isFocused ? 'var(--accent)' : 'var(--border)',
-            }}
-            onFocus={(e) => { setIsFocused(true); onFocus?.(e); }}
-            onBlur={(e) => { setIsFocused(false); onBlur?.(e); }}
+            aria-invalid={error ? true : props['aria-invalid']}
+            aria-describedby={error ? [props['aria-describedby'], errorId].filter(Boolean).join(' ') : props['aria-describedby']}
+            className="h-11 w-full rounded-[12px] border border-[#ffffff1a] bg-[#1d202fb3] pr-[14px] pl-10 text-[15px] text-[#f2f3fc] outline-none transition-[border-color,box-shadow,background-color] duration-150 placeholder:text-[#8890ad] focus:border-[#6b73e8cc] focus:bg-[#1d202f] focus:shadow-[0_0_0_3px_#5865c938] focus-visible:outline-none! aria-invalid:border-[#ff91a0] autofill:[-webkit-text-fill-color:#f2f3fc] autofill:[-webkit-box-shadow:0_0_0_100px_#1d202f_inset] autofill:caret-[#f2f3fc] autofill:focus:[-webkit-box-shadow:0_0_0_100px_#1d202f_inset,0_0_0_3px_#5865c938] pr-12"
           />
           <button
             type="button"
@@ -59,8 +49,7 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
               setLocalVisible(!showPassword);
               onVisibilityChange?.(!showPassword);
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2"
-            style={{ color: 'var(--text-muted)' }}
+            className="absolute top-1 right-1 grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-[#8890ad] hover:bg-[#ffffff14] hover:text-[#f2f3fc]"
             aria-label={showPassword ? t.common.aria.hidePassword : t.common.aria.showPassword}
             aria-pressed={showPassword}
           >
@@ -68,7 +57,7 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
           </button>
         </div>
         {error && (
-          <p className="text-xs mt-1" style={{ color: 'var(--danger)' }}>
+          <p id={errorId} role="alert" className="m-0 text-[13px] leading-[18px] text-[#ff91a0]">
             {error}
           </p>
         )}
