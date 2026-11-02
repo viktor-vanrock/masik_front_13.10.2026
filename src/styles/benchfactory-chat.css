@@ -1,0 +1,232 @@
+/* create (chat) */
+.bf-chat .view.full { padding: 0; min-height: 0; }
+.bf-chat .cr { display: grid; grid-template-columns: 280px minmax(0, 1fr) 320px; height: calc(100vh - 68px); height: calc(100dvh - 68px); border-top: 1px solid var(--hair); }
+.bf-chat .cr-side { border-right: 1px solid var(--hair); display: grid; grid-template-rows: auto 1fr; min-height: 0; background: color-mix(in srgb, var(--bg-deep) 60%, transparent); }
+.bf-chat .cr-side-head { padding: 16px; display: grid; gap: 12px; }
+.bf-chat .cr-side-head .btn { width: 100%; }
+.bf-chat .chats { overflow-y: auto; padding: 0 8px 16px; display: grid; align-content: start; gap: 2px; }
+.bf-chat .chats .overline { padding: 12px 10px 6px; font-size: 10px; }
+.bf-chat .chat-item { position: relative; display: grid; gap: 4px; width: 100%; padding: 10px 40px 10px 12px; border: 0; border-radius: var(--r); background: transparent; color: var(--fg); text-align: left; cursor: pointer; transition-property: background-color; transition-duration: 150ms; }
+.bf-chat .chat-item b { font-size: 14px; font-weight: 500; line-height: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bf-chat .chat-item[aria-current="true"] { background: color-mix(in srgb, var(--primary) 16%, transparent); }
+.bf-chat .chat-item .del { position: absolute; right: 6px; top: 50%; translate: 0 -50%; width: 28px; height: 28px; border-radius: var(--r-sm); border: 0; background: transparent; color: var(--subtle-fg); display: grid; place-items: center; cursor: pointer; opacity: 0; }
+.bf-chat .chat-item .del svg { width: 14px; height: 14px; }
+.bf-chat .chat-item:focus-within .del, .bf-chat .chat-item[aria-current="true"] .del { opacity: 1; }
+.bf-chat .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--subtle-fg); }
+.bf-chat .status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--c, var(--subtle-fg)); }
+.bf-chat .status.s-interview { --c: var(--warning); } .bf-chat .status.s-gen { --c: var(--primary-ink); } .bf-chat .status.s-review { --c: var(--violet-ink); } .bf-chat .status.s-ready { --c: var(--success-ink); }
+.bf-chat .cr-main { display: grid; grid-template-rows: auto 1fr auto; min-height: 0; min-width: 0; position: relative; }
+.bf-chat .cr-bar { display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-bottom: 1px solid var(--hair); min-height: 61px; }
+.bf-chat .cr-bar h1 { font-family: var(--font-text); font-size: 16px; font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bf-chat .cr-bar .icon-btn.mob { display: none; }
+.bf-chat .thread { overflow-y: auto; padding: 28px 20px 24px; scroll-behavior: smooth; }
+.bf-chat .thread-in { max-width: 760px; margin: 0 auto; display: grid; gap: 18px; }
+.bf-chat .m { display: grid; gap: 10px; max-width: 100%; animation: bf-chunk-in 300ms ease-out both; }
+.bf-chat .m.u { justify-items: end; }
+.bf-chat .m.u .bubble { background: var(--primary); color: #fff; border-radius: 18px 18px 6px 18px; padding: 10px 16px; max-width: min(560px, 88%); font-size: 15px; line-height: 22px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bf-chat .m.a { grid-template-columns: 32px minmax(0, 1fr); gap: 12px; align-items: start; }
+.bf-chat .m.a .ava { width: 32px; height: 32px; border-radius: 50%; background: radial-gradient(circle at 34% 30%, var(--i200) 0 8%, var(--i400) 22%, var(--i600) 52%, var(--i900) 86%); box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 50%, transparent); }
+.bf-chat .m.a .body { display: grid; gap: 12px; min-width: 0; padding-top: 4px; font-size: 15px; line-height: 23px; }
+.bf-chat .m.a .body > p { color: var(--fg); }
+.bf-chat .m.a .body .muted { color: var(--muted-fg); }
+.bf-chat .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.bf-chat .chip { height: 36px; padding: 0 14px; border-radius: var(--r-pill); border: 1px solid var(--btn-secondary-border); background: var(--btn-secondary-bg); color: var(--fg); font-size: 14px; font-weight: 500; cursor: pointer; transition-property: background-color, border-color, color, scale; transition-duration: 150ms; transition-timing-function: ease-out; display: inline-flex; align-items: center; gap: 8px; }
+.bf-chat .chip:active { scale: .96; }
+.bf-chat .chip.pri { border-color: color-mix(in srgb, var(--ring) 60%, transparent); background: color-mix(in srgb, var(--primary) 18%, transparent); color: var(--primary-ink); }
+.bf-chat .chip[disabled] { opacity: .45; cursor: default; scale: none; }
+.bf-chat .typing { display: inline-flex; gap: 5px; padding: 10px 0; }
+.bf-chat .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted-fg); animation: bf-blink 1s infinite; }
+.bf-chat .typing i:nth-child(2) { animation-delay: .2s; } .bf-chat .typing i:nth-child(3) { animation-delay: .4s; }
+.bf-chat .card { padding: 16px 18px; border-radius: var(--r-lg); border: 1px solid var(--hair-strong); background: color-mix(in srgb, var(--card) 70%, transparent); display: grid; gap: 12px; min-width: 0; }
+.bf-chat .card h4 { font-family: var(--font-display); font-size: 17px; line-height: 22px; font-weight: 600; }
+.bf-chat .found { display: grid; gap: 8px; }
+.bf-chat .found a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 12px 14px; border-radius: var(--r); border: 1px solid var(--hair-strong); background: color-mix(in srgb, var(--card) 60%, transparent); transition-property: border-color, background-color; transition-duration: 150ms; }
+.bf-chat .found a b { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.bf-chat .found a span { grid-column: 1; font-size: 13px; color: var(--subtle-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bf-chat .found a svg { grid-row: 1 / span 2; grid-column: 2; width: 16px; height: 16px; color: var(--subtle-fg); }
+.bf-chat .sum { display: grid; gap: 0; margin: 0; }
+.bf-chat .sum div { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 12px; padding: 9px 0; border-bottom: 1px dashed var(--hair); font-size: 14px; }
+.bf-chat .sum div:last-child { border-bottom: 0; }
+.bf-chat .sum dt { color: var(--subtle-fg); }
+.bf-chat .sum dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.bf-chat .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.bf-chat .steps li { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 12px; align-items: center; font-size: 14px; color: var(--subtle-fg); }
+.bf-chat .steps li i { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--hair-strong); display: grid; place-items: center; font-style: normal; font-family: var(--font-mono); font-size: 11px; }
+.bf-chat .steps li.on { color: var(--fg); }
+.bf-chat .steps li.on i { border-color: var(--primary-ink); color: var(--primary-ink); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent); animation: bf-blink 1.2s infinite; }
+.bf-chat .steps li.ok { color: var(--muted-fg); }
+.bf-chat .steps li.ok i { background: var(--success-surface); border-color: transparent; color: var(--success-ink); }
+.bf-chat .steps li small { font-family: var(--font-mono); font-size: 11px; }
+.bf-chat .generation-progress { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; }
+.bf-chat .generation-progress > .generation-percentage { white-space: nowrap; flex-shrink: 0; font-family: var(--font-mono); }
+.bf-chat .prog { height: 6px; border-radius: var(--r-pill); background: color-mix(in srgb, var(--muted-fg) 12%, transparent); overflow: hidden; }
+.bf-chat .prog i { display: block; height: 100%; width: var(--p, 0%); border-radius: inherit; background: linear-gradient(90deg, var(--primary), var(--primary-ink)); transition: width 300ms ease-out; }
+.bf-chat .sample { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 12px; padding: 14px; border-radius: var(--r-lg); border: 1px solid var(--hair-strong); background: color-mix(in srgb, var(--card) 55%, transparent); transition-property: border-color, opacity; transition-duration: 150ms; }
+.bf-chat .sample.off { opacity: .55; }
+.bf-chat .sample input[type=checkbox] { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--primary); cursor: pointer; }
+.bf-chat .sample .fields { display: grid; gap: 8px; min-width: 0; }
+.bf-chat .sample label.overline { font-size: 10px; }
+.bf-chat .sample textarea { width: 100%; resize: vertical; min-height: 44px; padding: 8px 10px; border-radius: var(--r-sm); border: 1px solid var(--hair); background: var(--bg-deep); color: var(--fg); font: inherit; font-size: 14px; line-height: 20px; field-sizing: content; }
+.bf-chat .sample textarea:focus { outline: none; border-color: color-mix(in srgb, var(--ring) 70%, transparent); }
+.bf-chat .composer { padding: 12px 20px calc(16px + env(safe-area-inset-bottom, 0px)); }
+.bf-chat .composer form { max-width: 760px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; padding: 8px 8px 8px 16px; border-radius: var(--r-xl); border: 1px solid var(--hair-strong); background: var(--card); transition-property: border-color, box-shadow; transition-duration: 150ms; }
+.bf-chat .composer form:focus-within { border-color: color-mix(in srgb, var(--ring) 70%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
+.bf-chat .composer textarea { border: 0; background: transparent; color: var(--fg); font: inherit; font-size: 15px; line-height: 22px; resize: none; padding: 9px 0; max-height: 180px; outline: none; field-sizing: content; min-height: 40px; }
+.bf-chat .composer textarea::placeholder { color: var(--subtle-fg); }
+.bf-chat .composer .send { width: 40px; height: 40px; border-radius: var(--r); padding: 0; }
+.bf-chat .composer .send svg { width: 18px; height: 18px; }
+.bf-chat .composer .hint { max-width: 760px; margin: 8px auto 0; font-size: 12px; color: var(--subtle-fg); text-align: center; }
+.bf-chat .cr-spec { border-left: 1px solid var(--hair); overflow-y: auto; padding: 20px; display: grid; align-content: start; gap: 16px; background: color-mix(in srgb, var(--bg-deep) 60%, transparent); }
+.bf-chat .cr-spec h2 { font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--subtle-fg); display: flex; justify-content: space-between; }
+.bf-chat .spec-list { display: grid; gap: 2px; }
+.bf-chat .spec-row { display: grid; gap: 2px; width: 100%; padding: 10px 12px; margin: 0 -12px; width: calc(100% + 24px); border: 0; border-radius: var(--r); background: transparent; text-align: left; color: var(--fg); cursor: pointer; }
+.bf-chat .spec-row span { font-size: 12px; color: var(--subtle-fg); display: flex; justify-content: space-between; }
+.bf-chat .spec-row b { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.bf-chat .spec-row b.empty-v { color: var(--subtle-fg); font-weight: 400; }
+.bf-chat .spec-value:not([data-expanded]) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.bf-chat .spec-disclosure { font-size: 12px; color: var(--primary-ink); }
+.bf-chat .spec-row[disabled] { cursor: default; }
+.bf-chat .spec-row .edit { opacity: 0; color: var(--primary-ink); font-size: 12px; }
+.bf-chat .spec-prog { display: grid; gap: 8px; font-size: 13px; color: var(--muted-fg); }
+
+@media (hover: hover) and (pointer: fine) {
+  .bf-chat .icon-btn:hover { color: var(--fg); background: var(--btn-secondary-hover); }
+  .bf-chat .links a:hover { background: var(--btn-secondary-bg); }
+  .bf-chat .chat-item:hover:not([aria-current="true"]) { background: var(--btn-secondary-bg); }
+  .bf-chat .chat-item:hover .del { opacity: 1; }
+  .bf-chat .chat-item .del:hover { color: var(--danger); background: var(--btn-secondary-bg); }
+  .bf-chat .chip:hover:not([disabled]) { background: var(--btn-secondary-hover); }
+  .bf-chat .chip.pri:hover:not([disabled]) { background: color-mix(in srgb, var(--primary) 26%, transparent); }
+  .bf-chat .found a:hover { border-color: color-mix(in srgb, var(--ring) 55%, transparent); }
+  .bf-chat .spec-row:not([disabled]):hover { background: var(--btn-secondary-bg); }
+  .bf-chat .spec-row:not([disabled]):hover .edit { opacity: 1; }
+}
+@media (max-width: 1180px) { .bf-chat .cr { grid-template-columns: 260px minmax(0, 1fr); } .bf-chat .cr-spec { display: none; } }
+@media (max-width: 760px) {
+  .bf-chat .cr { grid-template-columns: minmax(0, 1fr); }
+  .bf-chat .cr-side { position: fixed; z-index: 82; top: 0; bottom: 0; left: 0; width: min(320px, 86vw); translate: -100% 0; transition: translate 300ms var(--ease-out); background: var(--panel-top); border-right: 1px solid var(--hair-strong); }
+  .bf-chat .cr.side-open .cr-side { translate: 0 0; }
+  .bf-chat .cr-bar .icon-btn.mob { display: grid; }
+  .bf-chat .sum div { grid-template-columns: 110px minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bf-chat .m { animation-name: bf-fade-in; }
+  .bf-chat .steps li.on i, .bf-chat .typing i { animation: none; }
+  .bf-chat .chip:active, .bf-chat .icon-btn:active { scale: none; }
+}
+
+.bf-chat .m .chips .btn[disabled] { opacity: .45; cursor: default; scale: none; }
+.bf-chat .chip svg, .bf-chat .m .btn svg { width: 14px; height: 14px; flex: none; }
+.bf-chat .only-narrow { display: none !important; }
+@media (max-width: 1180px) { .bf-chat .only-wide { display: none !important; } .bf-chat .only-narrow { display: revert !important; } .bf-chat .card.only-narrow { display: grid !important; } .bf-chat .btn.only-narrow { display: inline-flex !important; } }
+.bf-chat .thread-in, .bf-chat .m.a .body { grid-template-columns: minmax(0, 1fr); }
+.bf-chat .chip { height: auto; min-height: 36px; padding-block: 7px; line-height: 20px; text-align: left; max-width: 100%; overflow-wrap: anywhere; }
+.bf-chat .cr-main, .bf-chat .cr-side { grid-template-columns: minmax(0, 1fr); }
+
+.bf-chat .no-dl [data-dl], .bf-chat .no-dl [data-act="dl"] { display: none !important; }
+/* rounded (pill) buttons everywhere */
+.bf-chat .btn { border-radius: var(--r-pill); }
+.bf-chat .icon-btn, .bf-chat .chat-item .del, .bf-chat .composer .send { border-radius: 50%; } .bf-chat .composer form { border-radius: 26px; }
+
+/* header: tabs in the middle, actions right, login/avatar last */
+
+/* all-caps captions: SB Sans Text instead of mono, optically no larger than before */
+.bf-chat .overline, .bf-chat .cr-spec h2 {
+  font-family: var(--font-text); font-weight: 500; letter-spacing: .06em; font-feature-settings: "case" 1;
+}
+.bf-chat .overline { font-size: 11.5px; }
+
+/* checkbox */
+.bf-chat .cbx { appearance: none; -webkit-appearance: none; flex: none; width: 18px; height: 18px; margin: 0; border-radius: 5px; border: 1.5px solid var(--border); background: color-mix(in srgb, var(--card) 70%, transparent); cursor: pointer; display: inline-grid; place-content: center; transition-property: background-color, border-color, box-shadow; transition-duration: 150ms; transition-timing-function: ease-out; }
+.bf-chat .cbx::after { content: ""; width: 10px; height: 8px; background: #fff; opacity: 0; scale: .6; transition: opacity 150ms ease-out, scale 150ms var(--ease-out);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 8'%3E%3Cpath d='M1 4.2 3.8 7 9 1' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 8'%3E%3Cpath d='M1 4.2 3.8 7 9 1' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+.bf-chat .cbx:checked { background: var(--primary); border-color: var(--primary); }
+.bf-chat .cbx:checked::after { opacity: 1; scale: 1; }
+.bf-chat .cbx:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 45%, transparent); }
+.bf-chat .cbx:disabled { cursor: default; opacity: .5; }
+@media (hover: hover) and (pointer: fine) { .bf-chat .cbx:not(:checked):not(:disabled):hover { border-color: var(--muted-fg); } }
+.bf-chat .check { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; align-items: start; font-size: 13px; line-height: 18px; color: var(--muted-fg); cursor: pointer; }
+.bf-chat .check a { color: var(--primary-ink); text-decoration: underline; text-underline-offset: 2px; text-decoration-color: color-mix(in srgb, var(--primary-ink) 40%, transparent); }
+.bf-chat .sample { grid-template-columns: 18px minmax(0, 1fr); align-items: start; padding: 16px; }
+.bf-chat .sample .cbx { margin-top: -1px; }
+
+/* icons: one stroke weight per size, close to text weight */
+.bf-chat .icon-btn svg, .bf-chat .composer .send svg { width: 16px; height: 16px; }
+.bf-chat .links a svg, .bf-chat .chat-item .del svg, .bf-chat .found a svg { width: 14px; height: 14px; }
+
+/* ── filters v2 ── */
+
+/* ── auth ── */
+.bf-chat .field-err { font-size: 13px; line-height: 18px; color: var(--danger); }
+.bf-chat .inl { color: var(--primary-ink); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, var(--primary-ink) 35%, transparent); border-radius: 4px; }
+
+/* ── chat email step ── */
+.bf-chat .mail-form { gap: 14px; }
+.bf-chat .field-s { display: grid; gap: 6px; }
+.bf-chat .field-s span { font-size: 13px; font-weight: 600; }
+.bf-chat .opt-mark { font-style: normal; font-size: 11px; color: var(--subtle-fg); margin-left: 6px; }
+.bf-chat .spec-row span { justify-content: flex-start; gap: 4px; }
+.bf-chat .spec-row span .edit { margin-left: auto; }
+
+/* ── account ── */
+.bf-chat .tag.bad { color: var(--danger); background: var(--danger-surface); }
+
+.bf-chat .composer textarea:disabled { cursor: not-allowed; }
+.bf-chat .composer form:has(textarea:disabled) { opacity: .6; }
+@media (max-width: 760px), (pointer: coarse) { .bf-chat input.input, .bf-chat textarea.input, .bf-chat .input, .bf-chat .composer textarea, .bf-chat .sample textarea { font-size: 16px !important; } }
+/* orb: no text selection / callout on long press */
+/* lane cards run to the lane's edge instead of being cut short inside the padding */
+
+/* chat list: pin + delete */
+.bf-chat .chat-item { padding-right: 72px; }
+.bf-chat .ci-acts { position: absolute; right: 6px; top: 50%; translate: 0 -50%; display: flex; gap: 2px; }
+.bf-chat .chat-item .ci-acts .del, .bf-chat .chat-item .pin { position: static; translate: none; width: 28px; height: 28px; border-radius: 50%; border: 0; background: transparent; color: var(--subtle-fg); display: grid; place-items: center; cursor: pointer; opacity: 0; }
+.bf-chat .chat-item .pin svg { width: 14px; height: 14px; }
+.bf-chat .chat-item:focus-within .pin, .bf-chat .chat-item[aria-current="true"] .pin, .bf-chat .chat-item.pinned .pin { opacity: 1; }
+.bf-chat .chat-item .pin[aria-pressed="true"] { color: var(--primary-ink); }
+.bf-chat .chat-item .pin[aria-pressed="true"] svg path { fill: currentColor; }
+@media (hover: hover) and (pointer: fine) { .bf-chat .chat-item:hover .pin { opacity: 1; } .bf-chat .chat-item .pin:hover { color: var(--fg); background: var(--btn-secondary-bg); } }
+@media (hover: none) { .bf-chat .chat-item .pin, .bf-chat .chat-item .ci-acts .del { opacity: 1; } }
+.bf-chat .chat-item:focus-within .ci-acts .del, .bf-chat .chat-item[aria-current="true"] .ci-acts .del { opacity: 1; } @media (hover: hover) and (pointer: fine) { .bf-chat .chat-item:hover .ci-acts .del { opacity: 1; } }
+
+/* ── home v16 content blocks (same tokens & components) ── */
+
+/* ── how: compact agents flow ── */
+/* causes: text-only cards */
+
+/* ── quality-of-evaluation block ── */
+
+/* Goodhart quote card v2 */
+
+/* Goodhart card: same surface as the cause cards */
+/* Goodhart: agent-card surface, bare large quotes */
+
+/* ── lucide everywhere: one stroke per size, crisp ── */
+.bf-chat svg.lucide { flex: none; }
+.bf-chat svg.lucide :is(path, circle, rect, line, polyline, polygon, ellipse) { vector-effect: non-scaling-stroke; stroke-width: 1.5px; }
+.bf-chat .cbx::after { width: 12px; height: 12px; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5' /%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5' /%3E%3C/svg%3E") center / contain no-repeat; }
+/* hero: bigger orb */
+
+/* mobile chat drawer above header, with scrim */
+.bf-chat .cr-scrim { display: none; }
+@media (max-width: 760px) {
+  .bf-chat .view.full { isolation: auto; }
+  .bf-chat .cr-side { z-index: 91; top: 0; height: 100dvh; padding-top: env(safe-area-inset-top, 0px); box-shadow: 24px 0 60px -20px var(--shadow-c); overscroll-behavior: contain; }
+  .bf-chat .cr-scrim { display: block; position: fixed; inset: 0; z-index: 90; background: rgb(4 5 22 / .6); backdrop-filter: blur(2px); opacity: 0; pointer-events: none; transition: opacity 300ms var(--ease-out); }
+  .bf-chat .cr.side-open .cr-scrim { opacity: 1; pointer-events: auto; }
+}
+
+.bf-chat .composer textarea { field-sizing: fixed; overflow-y: hidden; }
+@media (max-width: 760px), (pointer: coarse) { .bf-chat .composer .hint { display: none; } .bf-chat .composer { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); } }
+.bf-chat .m.a .ava { box-shadow: inset 0 -3px 6px rgb(11 14 47 / .45), inset 0 2px 4px rgb(234 238 253 / .25); }
+
+/* Exact chat styles and final cascade from the supplied HTML. */
+.bf-chat.view.full { padding: 0; min-height: 0; isolation: isolate; }
+.bf-chat :where(progress) { width: 100%; accent-color: var(--primary); }
+.bf-chat.view.full { position: relative; }
+@media (max-width: 760px) { .bf-chat.view.full { isolation: auto; } }
+.bf-chat .composer .send:disabled { opacity: 1; }
+.bf-chat .steps li b { font-weight: 600; color: var(--fg); }
+.bf-chat .m.a .body .steps { padding: 0; }
+.bf-chat .m.a .body .steps li { margin: 0; }

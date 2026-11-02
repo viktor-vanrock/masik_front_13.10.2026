@@ -1,0 +1,56 @@
+replicaCount: 1
+
+image:
+  repository: registry.sberdevices.ru/rndbtoc/benchmark-catalog/benchmark-catalog-front/benchmark-catalog-front
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: gitlab-registry-secret
+
+service:
+  enabled: true
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+
+ingress:
+  enabled: true
+  openshift: true
+  route:
+    path: "/"
+    annotations:
+      haproxy.router.openshift.io/rewrite-target: /
+  annotations: {}
+  hosts:
+    - host: apps.advosp.sberdevices.ru
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+volumes:
+  - name: cache
+    emptyDir:
+      sizeLimit: 100Mi
+  - name: run
+    emptyDir:
+      sizeLimit: 10Mi
+volumeMounts:
+  - name: cache
+    mountPath: "/var/cache/nginx"
+  - name: run
+    mountPath: "/var/run"
+
+livenessProbe:
+  tcpSocket:
+    port: 8080
+readinessProbe:
+  tcpSocket:
+    port: 8080

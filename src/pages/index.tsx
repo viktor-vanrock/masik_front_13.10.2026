@@ -1,0 +1,13 @@
+export { BenchmarksCatalogue } from './BenchmarksCatalogue';
+export { Guide } from './Guide';
+export { Login } from './Login';
+export { Profile } from './Profile';
+export { EditBenchmark } from './EditBenchmark';
+export { Dashboard } from './Dashboard';
+export { CreateBenchmark } from './BenchmarkCreate';
+export { BenchmarkDetail } from './BenchmarkDetail';
+export { AdminPanel } from './AdminPanel';
+export { NewBenchmark } from './NewBenchmark';
+export { Register } from './Register';
+export { Forbidden } from './Forbidden';
+export { AdminSettings } from './AdminSettings';

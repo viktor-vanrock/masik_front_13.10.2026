@@ -1,0 +1,18 @@
+export const ROUTES = {
+  HOME: '/',
+  CATALOG: '/catalog',
+  GUIDE: '/guide',
+  BENCHMARK: (id: string | number) => `/benchmark/${id}`,
+  DASHBOARD: '/dashboard',
+  RUN_RESULT: (modelId: string) => `/run-result/${encodeURIComponent(modelId)}`,
+  RUN_RESULT_ROUTE: '/run-result/:modelId',
+  PROFILE: '/profile',
+  ADD_BENCHMARK: '/add-benchmark',
+  CREATE: '/create',
+  LOGIN: '/login',
+  REGISTER: '/register',
+  FORBIDDEN: '/forbidden',
+  ADMIN: '/admin',
+  ADMIN_EDIT: (id: string | number) => `/admin/edit/${id}`,
+  ADMIN_SETTINGS: (category: string, type: string) => `/admin/settings/${category}/${type}`,
+} as const;

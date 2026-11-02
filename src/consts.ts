@@ -1,0 +1,2 @@
+export const GLOBAL_HEADER_HEIGHT = 58;
+export const GLOBAL_FOOTER_HEIGHT = 88;

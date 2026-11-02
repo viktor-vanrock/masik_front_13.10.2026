@@ -1,0 +1,14 @@
+.bf-app .m.a .body > p { white-space: pre-wrap; }
+.bf-app .found .recommendation { display: grid; gap: 8px; }
+.bf-app .m.a .body :is(ul, ol) { margin: 0; padding-inline-start: 1.5em; }
+.bf-app .m.a .body ul { list-style: disc; }
+.bf-app .m.a .body ol { list-style: decimal; }
+.bf-app .m.a .body li { margin-block: .25em; }
+.bf-app .m.a .body li::marker { color: var(--primary-ink); }
+.bf-app .m.a .body :is(h1, h2, h3, h4, h5, h6) { margin: 0; font-size: 1.15em; font-weight: 600; line-height: 1.4; }
+.bf-app .m.a .body strong { font-weight: 600; }
+.bf-app .m.a .body > p a { color: var(--primary-ink); text-decoration: underline; text-underline-offset: 3px; }
+.bf-app .m.a .body code { padding: .1em .3em; border-radius: 4px; background: var(--btn-secondary-bg); font-family: var(--font-mono); font-size: .95em; }
+.bf-app .m.a .body pre { margin: 0; padding: 12px; border-radius: var(--r-sm); overflow-x: auto; background: var(--btn-secondary-bg); white-space: pre; }
+.bf-app .m.a .body pre code { padding: 0; border-radius: 0; }
+.bf-app .m.a .body blockquote { margin: 0; padding-inline-start: 1em; border-inline-start: 1px solid var(--hair-strong); }
